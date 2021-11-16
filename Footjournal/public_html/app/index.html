@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Footjournal</title>
+    <link rel="stylesheet" href="../style.css">
+  </head>
+  <body>
+    <style>
+      body{
+        background: rgb(0,145,173);
+        background: radial-gradient(circle, rgba(0,145,173,1) 0%, rgba(183,9,76,1) 100%);
+        color: #455E89;
+      }
+    </style>
+    <div id="container">
+      <div id="Footjournal_header">
+        <h1>Footjournal</h1>
+        <p>Welcome to Footjournal</p>
+      </div>
+      <div id="login">
+        <h1>Login</h1>
+        <label for="username">Username</label>
+        <input type="text" id="username" value="">
+        <br>
+        <label for="password">Password</label>
+        <input type="text" id="password" value="">
+        <br>
+        <!-- Create onclick -->
+        <button type="button" id="login_button" onclick="">Login</button>
+        <!-- Don't forget to update error message -->
+        <div id="error_message"></div>
+        <h1>Create Account</h1>
+        <label for="username">Username</label>
+        <input type="text" id="username_create" value="">
+        <br>
+        <label for="password">Password</label>
+        <input type="text" id="password_create" value="">
+        <br>
+        <!-- Create onclick -->
+        <button type="button" id="create_user_button" onclick="">Create</button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,190 @@
+/* style for index.html */
+body{
+  font-family: Lucidatypewriter, monospace;
+  background-color: #e2eafc;
+}
+
+#container{
+  background-color: #e2eafc;
+  width:30%;
+  height:60%;
+  position: fixed;
+  left: 35%;
+  top: 20%;
+  text-align: center;
+  border: solid 5px;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+#Footjournal_header h1{
+  font-family: Georgia, serif;
+  font-size: 40px;
+  color: #455E89;
+}
+
+#login label{
+  padding-left:26px;
+  width: 15%;
+  display:inline-block
+}
+
+#login input{
+  width: 20%;
+  margin-bottom: 10px;
+  border: none;
+  border-bottom: 1px solid black;
+  background-color: inherit;
+}
+
+#login button{
+  margin: 20px;
+  padding: 10px 24px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+}
+
+#login button:hover{
+  background-color: #892B64;
+  color: white;
+}
+
+#login #error_message{
+  color: red;
+}
+
+/* style for home.html */
+
+#Footjournal_home{
+  font-family: Georgia, serif;
+  font-size: 25px;
+  color: #455E89;
+  width:100%;
+  height:15%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border: solid 1px black;
+}
+
+#Footjournal_home h1{
+  margin: 10px;
+}
+
+#Footjournal_home button{
+  margin: 10px;
+  padding: 10px 24px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+}
+
+#Footjournal_home button:hover{
+  background-color: #71A5DE;
+  color: white;
+}
+
+#RSS{
+  height: 85%;
+  width: 20%;
+  position: fixed;
+  left:0;
+  bottom:0;
+  border: solid 1px red;
+  background-color: #71A5DE;
+}
+
+#content{
+  height: 85%;
+  width:60%;
+  position: fixed;
+  bottom:0;
+  left:20%;
+  border: solid 1px green;
+  background-color: #AECBEB;
+  text-align: center;
+}
+
+
+
+.text_post{
+  width:60%;
+  height: auto;
+  border: solid black 1px;
+  text-align: left;
+  display: inline-block;
+  padding: 20px;
+  margin: 10px;
+}
+
+.text_post .pfp_post{
+  height: 30px;
+  width: auto;
+  border-radius: 50%;
+}
+
+.text_post .username_post{
+  display: inline;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.button_post{
+  margin-top: 5px;
+  padding: 5px 12px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+}
+
+.button_post:hover{
+  background-color: #E1ECF7;
+}
+
+.text_post .content_post{
+  /* style the content in posts */
+}
+
+#suggest{
+  height: 85%;
+  width: 20%;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  border: solid 1px red;
+  background-color: #71A5DE;
+  text-align: center;
+}
+
+.post_suggest{
+  width:80%;
+  height: auto;
+  display: inline-block;
+  border: solid 1px black;
+  padding: 3px;
+  margin: 10px;
+}
+
+.post_suggest img{
+  height: 30px;
+  width: auto;
+  border-radius: 50%;
+}
+
+.post_suggest .username_suggest{
+  display: inline;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.post_suggest .follow_suggest{
+  margin-top: 5px;
+  padding: 5px 12px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+}
+.post_suggest .follow_suggest:hover{
+  background-color: #E1ECF7;
+}
