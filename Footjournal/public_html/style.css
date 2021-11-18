@@ -6,8 +6,8 @@ body{
 
 #container{
   background-color: #e2eafc;
-  width:30%;
-  height:60%;
+  width:30vw;
+  height: auto;
   position: fixed;
   left: 35%;
   top: 20%;
@@ -24,13 +24,12 @@ body{
 }
 
 #login label{
-  padding-left:26px;
-  width: 15%;
+  width: 15vw;
   display:inline-block
 }
 
 #login input{
-  width: 20%;
+  width: 15vw;
   margin-bottom: 10px;
   border: none;
   border-bottom: 1px solid black;
@@ -43,10 +42,11 @@ body{
   background-color: inherit;
   border-radius: 12px;
   font-family: Lucidatypewriter, monospace;
+  display: inline-block;
 }
 
 #login button:hover{
-  background-color: #892B64;
+  background-color: #71A5DE;
   color: white;
 }
 
@@ -60,12 +60,13 @@ body{
   font-family: Georgia, serif;
   font-size: 25px;
   color: #455E89;
-  width:100%;
-  height:15%;
+  width:100vw;
+  height:20vh;
   position: fixed;
   top: 0;
   left: 0;
   border: solid 1px black;
+  padding: 5px;
 }
 
 #Footjournal_home h1{
@@ -86,8 +87,8 @@ body{
 }
 
 #RSS{
-  height: 85%;
-  width: 20%;
+  height: 80vh;
+  width: 20vw;
   position: fixed;
   left:0;
   bottom:0;
@@ -96,8 +97,8 @@ body{
 }
 
 #content{
-  height: 85%;
-  width:60%;
+  height: 80vh;
+  width:60vw;
   position: fixed;
   bottom:0;
   left:20%;
@@ -147,8 +148,8 @@ body{
 }
 
 #suggest{
-  height: 85%;
-  width: 20%;
+  height: 80vh;
+  width: 20vw;
   position: fixed;
   right: 0;
   bottom: 0;
