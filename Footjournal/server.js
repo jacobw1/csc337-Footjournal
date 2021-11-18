@@ -1,7 +1,7 @@
 /*
 Dylan Burish, Jacob Williams, Francisco Figueroa
 CSC 337
-Final Project
+Final Project -- Footjournal
 server.js
 **Short desc. of server-side processes**
 */
@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(express.json()); //parses incoming JSON on arrival
 app.use('/app/*', auth);
 app.use(express.static('public_html'));
-app.get('/', (req, res) => { res.redirect('/app/home.html')})
+app.get('/', (req, res) => { res.redirect('/account/home.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
 const MAX_LOGIN_TIME = 300000; //5 minutes
@@ -139,11 +139,11 @@ function auth(req, res, next){
             next();
         }
         else{
-            res.redirect('/login/index.html');
+            res.redirect('/app/index.html');
         }
     }
     else{
-        res.redirect('/login/index.html');
+        res.redirect('/app/index.html');
     }
 }
 
@@ -153,12 +153,12 @@ User creation and login section, send either a POST or GET request respectively 
 existing user and allow them to sign-in or create a brand new user
 */
 //we can change this to better accommodate a more reliable user login i just copied what Ben did tbh*******
-app.get('/account/login/:user/:pass', (req, res) => {
-    var user = decodeURIComponent(req.params.user);
-    var pss = decodeURIComponent(req.params.pass);
+app.get('/app/login/', (req, res) => {
+    var user = req.body.user;
+    var pss = req.body.pass;
     Users.find({'username': user}).exec((err, result) => {
         if(err){
-            return res.send('ERROR LOGGING IN');
+            res.send('ERROR LOGGING IN');
         }
         else{
             var data = hash.update(pss + result.salt, 'utf-8');//same asyc probs possiblities
@@ -166,14 +166,17 @@ app.get('/account/login/:user/:pass', (req, res) => {
             if(attmpt == result.hash){
                 createSession(user);
                 res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
-                res.end('LOGIN');
+                res.send('success');
+            }
+            else{
+                res.send('INCORRECT LOGIN ATTEMPT');
             }
         }
     });
 });
 
 //idk if you guys want to user multer for this added unique usernames & hashing+salt*******
-app.post('/account/create', (req,res) => {
+app.post('/app/create/', (req,res) => {
     pass = req.body.password;
     var nacl = crypto.randomInt(100000000);
     data = hash.update(pass + nacl, 'utf-8'); // might be an issue in these methods skippin cause async
@@ -210,7 +213,7 @@ app.post('/account/create', (req,res) => {
 Post section
 */
 //will have to see if we want to use multer for everthin will fix if so
-app.post('/app/create/post', (req,res) => {
+app.post('/account/create/post', (req,res) => {
     postTime = new Date(Date.now());
     var entry = new Posts({
         title: req.body.title,
@@ -230,7 +233,7 @@ app.post('/app/create/post', (req,res) => {
 });
 
 //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
-app.post('/app/like/post', (req, res) => {
+app.post('/account/like/post', (req, res) => {
     Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
         if(err){
             console.log('ERROR INCREASING LIKE COUNT');
@@ -244,7 +247,7 @@ app.post('/app/like/post', (req, res) => {
 });
 
 //getting all the posts
-app.get('/app/get/posts', (req, res) => {
+app.get('/account/get/posts', (req, res) => {
     Posts.find({}).exec((err, results) => {
         if(err){
             console.log('PROBLEM GETTING ALL POSTS');
@@ -258,7 +261,7 @@ app.get('/app/get/posts', (req, res) => {
 });
 
 //getting all current user's posts
-app.get('/app/get/myPosts', (req, res) => {
+app.get('/account/get/myPosts', (req, res) => {
     var nUser = req.cookies.login.username;
     Users.findOne({'username':nUser}).exec((err, user) => {
         if(err){
@@ -281,7 +284,7 @@ app.get('/app/get/myPosts', (req, res) => {
 });
 
 //searching all posts in case we want to implement something like this with maybe hashtags or somethin
-app.get('/app/search/posts/:KEYWORDS', (req,res) => {
+app.get('/account/search/posts/:KEYWORDS', (req,res) => {
     var nKey = decodeURIComponent(req.params.KEYWORDS);
     Posts.find({'body': {$regex: new RegExp(nKey), $options:'i'}}).exec((err, results) => {
         if(err){
