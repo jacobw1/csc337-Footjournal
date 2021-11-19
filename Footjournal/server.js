@@ -12,11 +12,12 @@ Imported modules
 */
 const express = require('express');
 const mongoose = require('mongoose');
-const upload = require('multer');
+const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 
 const app = express();
+//const upload = multer({dest:''}); <- multer thing on docs idk if needed
 app.use(cookieParser());
 app.use(express.json()); //parses incoming JSON on arrival
 app.use('/app/*', auth);
@@ -175,12 +176,12 @@ app.get('/app/login/', (req, res) => {
     });
 });
 
-//idk if you guys want to user multer for this added unique usernames & hashing+salt*******
+//*******need to accom. for multer *******
 app.post('/app/create/', (req,res) => {
     pass = req.body.password;
     var nacl = crypto.randomInt(100000000);
-    data = hash.update(pass + nacl, 'utf-8'); // might be an issue in these methods skippin cause async
-    spud = data.digest('hex'); // can put all of these in a call back if so
+    data = hash.update(pass + nacl, 'utf-8'); // would methods be skippin cause async ?
+    spud = data.digest('hex'); // can put all of these in a call back if so tho
     Users.findOne({'username':req.body.username}).exec((err, result) => {
         if(err){
             console.log('ERROR CHECKING IF USERNAME AVAILABLE');
@@ -212,14 +213,15 @@ app.post('/app/create/', (req,res) => {
 /*
 Post section
 */
-//will have to see if we want to use multer for everthin will fix if so
+//*******need to accom. for multer ******* upload.single(''); i think
 app.post('/account/create/post', (req,res) => {
-    postTime = new Date(Date.now());
+    //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
+    postTime = (new Date(Date.now())).toLocaleString();
     var entry = new Posts({
         title: req.body.title,
         body: req.body.body,
         image: req.body.image,
-        date: postTime.toLocaleString(), //returns a string mm/dd/yyyy, hh:mm:ss AM/PM
+        date: postTime,
         isCommentable: req.body.bool,
         likeCount: 0,
     });
@@ -234,14 +236,32 @@ app.post('/account/create/post', (req,res) => {
 
 //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
 app.post('/account/like/post', (req, res) => {
+    var user = req.cookies.login.username;
     Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
         if(err){
             console.log('ERROR INCREASING LIKE COUNT');
             res.send('ERROR INCREASING LIKE COUNT');
         }
         else{
-            console.log('LIKE SUCCESSFUL');
-            res.send('success');
+            Users.findOne({'username': user}).exec((err, result) => {
+                if(err){
+                    console.log('ERROR IDENTIFYING USER LIKING THIS');
+                    res.send('ERROR IDENTIFYING USER LIKING THIS');
+                }
+                else{
+                    result.likes.push(req.body.id);
+                    user.save((err) => {
+                        if(err){
+                            console.log('ERROR SAVING LIKE TO USER');
+                            res.send('ERROR SAVING LIKE TO USER');
+                        }
+                        else{
+                            console.log('LIKE SUCCESSFUL');
+                            res.send('success');
+                        }
+                    });
+                }
+            });
         }
     });
 });
@@ -255,28 +275,29 @@ app.get('/account/get/posts', (req, res) => {
         }
         else{
             console.log('GETTING ALL POSTS SUCCESFUL');
-            res.send(JSON.stringify(results, null, 2)); //formatting json for testing purposes
+            //▼ formatting json for testing purposes ▼
+            res.send(JSON.stringify(results, null, 2));
         }
     });
 });
 
 //getting all current user's posts
 app.get('/account/get/myPosts', (req, res) => {
-    var nUser = req.cookies.login.username;
-    Users.findOne({'username':nUser}).exec((err, user) => {
+    var user = req.cookies.login.username;
+    Users.findOne({'username': user}).exec((err, result) => {
         if(err){
             console.log('ERR LOOKING FOR USER');
             res.send('ERR LOOKING FOR USER');
         }
         else{
-            Posts.find({'_id': {$in:user.posts}}, (err, results) => {
+            Posts.find({'_id': {$in:result.posts}}, (err, postList) => {
                 if(err){
                     console.log('ERR FINDING POSTS FOR USER');
                     res.send('ERR FINDING POSTS FOR USER');
                 }
                 else{
                     console.log('success');
-                    res.end(JSON.stringify(results, null, 2));
+                    res.end(JSON.stringify(postList, null, 2));
                 }
             });
         }
@@ -293,3 +314,118 @@ app.get('/account/search/posts/:KEYWORDS', (req,res) => {
         res.end(JSON.stringify(results, null, 2));
     });    
 });
+
+
+/*
+Follow a user, fetching followers + following, and Likes for user
+*/
+//will assume follow button has somethin like onClickfunc(objectID) that gets send with the req
+app.post('/app/follow/user', (req, res) => {
+    var user = req.cookies.login.username;
+    Users.findOne({'username': user}).exec((err, curUser) => {
+        if(err){
+            console.log('ERROR IDENTIFYING USER LIKING THIS');
+            res.send('ERROR IDENTIFYING USER LIKING THIS');
+        }
+        else{
+            Users.findOne({'_id':req.body.id}).exec((err, target) => {
+                if(err){
+                    console.log('ERROR FINDING TARGET USER');
+                    res.send('ERROR FINDING TARGET USER');
+                }
+                else{
+                    curUser.following.push(req.body.id);
+                    target.followers.push(curUser._id)//i think is how u access id
+                    //a lot of callback idk if we can skip any of this, couldnt find on stackoverflow if the save callbacks were optional
+                    curUser.save((err) => {
+                        if(err){
+                            console.log('ERROR SAVING AT CURRENT USER');
+                            res.send('ERROR SAVING AT CURRENT USER');
+                        }
+                        else{
+                            target.save((err) => {
+                                if(err){
+                                    console.log('ERROR SAVING AT TARGET USER');
+                                    res.send('ERROR SAVING AT TARGET USER');
+                                }
+                                else {res.send('success');}
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
+//
+app.get('/app/get/followers', (req, res) => {
+    var user = req.cookies.login.username;
+    Users.findOne({'username': user}).exec((err, result) => {
+        if(err){
+            console.log('ERROR FETCHING USER');
+            res.send('ERROR FETCHING USER');
+        }
+        else{
+            Users.find({'_id':{$in: result.followers}}, (err, followList) => {
+                if(err){
+                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
+                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
+                }
+                else{
+                    res.send(JSON.stringify(followList, null, 2));
+                }
+            });
+        }
+    });
+});
+
+//
+app.get('/app/get/following', (req, res) => {
+    var user = req.cookies.login.username;
+    Users.findOne({'username': user}).exec((err, result) => {
+        if(err){
+            console.log('ERROR FETCHING USER');
+            res.send('ERROR FETCHING USER');
+        }
+        else{
+            Users.find({'_id':{$in: result.following}}, (err, followList) => {
+                if(err){
+                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
+                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
+                }
+                else{
+                    res.send(JSON.stringify(followList, null, 2));
+                }
+            });
+        }
+    });
+});
+
+//
+app.get('/app/get/likes', (req, res) => {
+    var user = req.cookies.login.username;
+    Users.findOne({'username': user}).exec((err, result) => {
+        if(err){
+            console.log('ERROR FETCHING USER');
+            res.send('ERROR FETCHING USER');
+        }
+        else{
+            Users.find({'_id':{$in: result.likes}}, (err, likeList) => {
+                if(err){
+                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
+                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
+                }
+                else{
+                    res.send(JSON.stringify(likeList, null, 2));
+                }
+            });
+        }
+    });
+}); 
+
+
+/*
+Misc.
+*/
+//
