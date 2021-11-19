@@ -334,8 +334,8 @@ app.post('/app/follow/user', (req, res) => {
                     res.send('ERROR FINDING TARGET USER');
                 }
                 else{
-                    curUser.following.push(curUser._id);
-                    target.followers.push(req.body.id)//i think is how u access id
+                    curUser.following.push(req.body.id);
+                    target.followers.push(curUser._id)//i think is how u access id
                     //a lot of callback idk if we can skip any of this, couldnt find on stackoverflow if the save callbacks were optional
                     curUser.save((err) => {
                         if(err){
