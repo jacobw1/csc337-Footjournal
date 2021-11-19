@@ -1,7 +1,7 @@
 /*
 Dylan Burish, Jacob Williams, Francisco Figueroa
 CSC 337
-Final Project
+Final Project -- Footjournal
 server.js
 **Short desc. of server-side processes**
 */
@@ -14,13 +14,15 @@ const express = require('express');
 const mongoose = require('mongoose');
 const upload = require('multer');
 const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 
 const app = express();
 app.use(cookieParser());
 app.use(express.json()); //parses incoming JSON on arrival
 app.use('/app/*', auth);
 app.use(express.static('public_html'));
-app.get('/', (req, res) => { res.redirect('/app/home.html')})
+app.get('/', (req, res) => { res.redirect('/account/home.html')})
+var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
 const MAX_LOGIN_TIME = 300000; //5 minutes
 
@@ -43,7 +45,7 @@ conn.on('error', console.error.bind(console, 'connection error: '));
 
 
 /*
-The creation of a Schema object that will act as our skeleton structure to preform entries into our
+The creation of a Schema object that will act as our skeleton structure to preform entries into our 
 Mongo database. When the object structure is layed out, a mongoose.model() object is created
 that holds our created Schema and have entering data be modeled against it.
 */
@@ -51,12 +53,14 @@ that holds our created Schema and have entering data be modeled against it.
 var userSchema = new Schema({
     name: String,
     username: String,
-    password: String,
+    salt: String,
+    hash: String,
     birthday: String,
     profilePicture: String,
     followers: [{type:mongoose.Types.ObjectId, ref:'Users'}],
     following: [{type:mongoose.Types.ObjectId, ref:'Users'}],
-    likes: [{type:mongoose.Types.ObjectId, ref:'Posts'}]
+    likes: [{type:mongoose.Types.ObjectId, ref:'Posts'}],
+    posts: [{type:mongoose.Types.ObjectId, ref:'Posts'}]
 });
 var Users = mongoose.model('users', userSchema);
 
@@ -135,53 +139,72 @@ function auth(req, res, next){
             next();
         }
         else{
-            res.redirect('/login/index.html');
+            res.redirect('/app/index.html');
         }
     }
     else{
-        res.redirect('/login/index.html');
+        res.redirect('/app/index.html');
     }
 }
 
 
 /*
-User creation and login section, send either a POST or GET request respectively to either confirm an
+User creation and login section, send either a POST or GET request respectively to either confirm an 
 existing user and allow them to sign-in or create a brand new user
 */
 //we can change this to better accommodate a more reliable user login i just copied what Ben did tbh*******
-app.get('/account/login/:user/:pass', (req, res) => {
-    var user = decodeURIComponent(req.params.user);
-    var pss = decodeURIComponent(req.params.password);
-    Users.find({'username': user, 'password': pss}).exec((err, result) => {
+app.get('/app/login/', (req, res) => {
+    var user = req.body.user;
+    var pss = req.body.pass;
+    Users.find({'username': user}).exec((err, result) => {
         if(err){
-            return res.send('ERROR LOGGING IN');
-        }
-        else if(result.length == 1){
-            createSession(user);
-            res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
-            res.end('LOGIN');
+            res.send('ERROR LOGGING IN');
         }
         else{
-            res.end('Incorrect number of users');
+            var data = hash.update(pss + result.salt, 'utf-8');//same asyc probs possiblities
+            var attmpt = data.digest('hex');
+            if(attmpt == result.hash){
+                createSession(user);
+                res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
+                res.send('success');
+            }
+            else{
+                res.send('INCORRECT LOGIN ATTEMPT');
+            }
         }
     });
 });
 
-//idk if you guys want to user multer for this also didnt know if you guys wanted unique usernames *******
-app.post('/account/create', (req,res) => {
-    var entry = new Users({
-        name: req.body.name,
-        username: req.body.username,
-        password: req.body.password,
-        birthday: req.body.birthday,
-        profilePicture: req.body.image
-    });
-    entry.save((err) => {
+//idk if you guys want to user multer for this added unique usernames & hashing+salt*******
+app.post('/app/create/', (req,res) => {
+    pass = req.body.password;
+    var nacl = crypto.randomInt(100000000);
+    data = hash.update(pass + nacl, 'utf-8'); // might be an issue in these methods skippin cause async
+    spud = data.digest('hex'); // can put all of these in a call back if so
+    Users.findOne({'username':req.body.username}).exec((err, result) => {
         if(err){
-            console.log('ERROR CREATING NEW USER');
-            res.send('ERROR CREATING NEW USER');
+            console.log('ERROR CHECKING IF USERNAME AVAILABLE');
         }
-        res.send('User creation successful');
+        if(!result){
+            var entry = new Users({
+                name: req.body.name,
+                username: req.body.username,
+                salt: nacl,
+                hash: spud,
+                birthday: req.body.birthday,
+                profilePicture: req.body.image
+            });
+            entry.save((err) => {
+                if(err){
+                    console.log('ERROR CREATING NEW USER');
+                    res.send('ERROR CREATING NEW USER');
+                }
+                res.send('success');
+            });
+        }
+        else{
+            res.end('USERNAME ALREADY IN USE');
+        }
     });
 });
 
@@ -189,4 +212,84 @@ app.post('/account/create', (req,res) => {
 /*
 Post section
 */
-//
+//will have to see if we want to use multer for everthin will fix if so
+app.post('/account/create/post', (req,res) => {
+    postTime = new Date(Date.now());
+    var entry = new Posts({
+        title: req.body.title,
+        body: req.body.body,
+        image: req.body.image,
+        date: postTime.toLocaleString(), //returns a string mm/dd/yyyy, hh:mm:ss AM/PM
+        isCommentable: req.body.bool,
+        likeCount: 0,
+    });
+    entry.save((err) => {
+        if(err){
+            console.log('ERROR SAVING POST AT DB');
+            res.send('ERROR SAVING POST AT DB')
+        }
+        res.send('success');
+    });
+});
+
+//will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
+app.post('/account/like/post', (req, res) => {
+    Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
+        if(err){
+            console.log('ERROR INCREASING LIKE COUNT');
+            res.send('ERROR INCREASING LIKE COUNT');
+        }
+        else{
+            console.log('LIKE SUCCESSFUL');
+            res.send('success');
+        }
+    });
+});
+
+//getting all the posts
+app.get('/account/get/posts', (req, res) => {
+    Posts.find({}).exec((err, results) => {
+        if(err){
+            console.log('PROBLEM GETTING ALL POSTS');
+            res.send('PROBLEM GETTING ALL POSTS');
+        }
+        else{
+            console.log('GETTING ALL POSTS SUCCESFUL');
+            res.send(JSON.stringify(results, null, 2)); //formatting json for testing purposes
+        }
+    });
+});
+
+//getting all current user's posts
+app.get('/account/get/myPosts', (req, res) => {
+    var nUser = req.cookies.login.username;
+    Users.findOne({'username':nUser}).exec((err, user) => {
+        if(err){
+            console.log('ERR LOOKING FOR USER');
+            res.send('ERR LOOKING FOR USER');
+        }
+        else{
+            Posts.find({'_id': {$in:user.posts}}, (err, results) => {
+                if(err){
+                    console.log('ERR FINDING POSTS FOR USER');
+                    res.send('ERR FINDING POSTS FOR USER');
+                }
+                else{
+                    console.log('success');
+                    res.end(JSON.stringify(results, null, 2));
+                }
+            });
+        }
+    });  
+});
+
+//searching all posts in case we want to implement something like this with maybe hashtags or somethin
+app.get('/account/search/posts/:KEYWORDS', (req,res) => {
+    var nKey = decodeURIComponent(req.params.KEYWORDS);
+    Posts.find({'body': {$regex: new RegExp(nKey), $options:'i'}}).exec((err, results) => {
+        if(err){
+            console.log('err looking for user in purchases');
+        }
+        res.end(JSON.stringify(results, null, 2));
+    });    
+});
