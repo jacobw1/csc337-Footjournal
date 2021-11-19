@@ -6,7 +6,7 @@ login.js
 **Short desc. of client-side login process**
 */
 
-//i used jquery but we can change this all if you guys aren't fans of it
+//i used jquery but we can change if you guys aren't fans of it
 function login(){
     let user = $('#username').val();
     let pass = $('#password').val();
@@ -22,7 +22,7 @@ function login(){
             }
             else{
                 $('error_message').html('Error: Please check username or password');
-//i clear the login fields here but if we do decide to carry this over to the create acc page we can delete
+//i clear the fields but if we do decide to carry this over to the create acc page we can delete
                 $('#username').val('');
                 $('#password').val('');
             }
@@ -30,16 +30,23 @@ function login(){
     });
 }
 
+//here you probably need a form data thing for multer ****
 //have an alert to signify any issue but if we want to go a more subtle route its cool
 function createUser(){
+    /*
+    let deno = $('name').val();
     let user = $('#username').val();
     let pass = $('#password').val();
-    var jData = JSON.stringify({username:user, password:pass});
+    let bday = $('birthday').val();
+    var jData = JSON.stringify({name:deno, username:user, password:pass, birthday:bday});
+    */
+    newAcc = new FormData($('#accCreate')); //add a <form></form> in html ? 
     $.ajax({
         url: '/app/create/',
-        data: jData,
+        data: newAcc,
         method: 'POST',
-        contentType: 'application/json',
+        processData: false,
+        contentType: false,
         success: (result) => {
             if(result != 'success'){
                 alert(result);

@@ -4,6 +4,8 @@
     <meta charset="UTF-8"/>
     <title>Footjournal</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../jquery.js"></script>
+    <script src="login.js"></script>
   </head>
   <body>
     <style>
@@ -27,7 +29,7 @@
         <input type="text" id="password" value="">
         <br>
         <!-- Create onclick -->
-        <button type="button" id="login_button" onclick="">Login</button>
+        <button type="button" id="login_button" onclick="login()">Login</button>
         <button type="button" id="create_user_button" onclick="window.location.href='create.html'">Create Account</button>
         <!-- Don't forget to update error message -->
         <div id="error_message"></div>
