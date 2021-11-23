@@ -15,14 +15,15 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
-
+const port = 80;
 const app = express();
+
 //const upload = multer({dest:''}); <- multer thing on docs idk if needed
 app.use(cookieParser());
 app.use(express.json()); //parses incoming JSON on arrival
-app.use('/app/*', auth);
+app.use('/account/*', auth);
 app.use(express.static('public_html'));
-app.get('/', (req, res) => { res.redirect('/account/home.html')})
+app.get('/', (req, res) => { res.redirect('/app/index.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
 const MAX_LOGIN_TIME = 300000; //5 minutes
@@ -423,6 +424,8 @@ app.get('/app/get/likes', (req, res) => {
         }
     });
 }); 
+
+app.listen(port, () => console.log("App is listening"));
 
 
 /*
