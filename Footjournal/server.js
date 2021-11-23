@@ -155,23 +155,27 @@ User creation and login section, send either a POST or GET request respectively 
 existing user and allow them to sign-in or create a brand new user
 */
 //we can change this to better accommodate a more reliable user login i just copied what Ben did tbh*******
-app.get('/app/login/', (req, res) => {
-    var user = req.body.user;
-    var pss = req.body.pass;
+app.get('/app/login/:username/:password', (req, res) => {
+    var user = req.params.username;
+    var pss = req.params.password;
     Users.find({'username': user}).exec((err, result) => {
         if(err){
             res.send('ERROR LOGGING IN');
         }
         else{
-            var data = hash.update(pss + result.salt, 'utf-8');//same asyc probs possiblities
-            var attmpt = data.digest('hex');
-            if(attmpt == result.hash){
+            if (result.length === 0){
+              res.send("INCORRECT LOGIN ATTEMPT");
+            } else {
+              var data = hash.update(pss + result[0].salt, 'utf-8');//same asyc probs possiblities
+              var attmpt = data.digest('hex');
+              if(attmpt == result[0].hash){
                 createSession(user);
                 res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
                 res.send('success');
-            }
-            else{
+              }
+              else{
                 res.send('INCORRECT LOGIN ATTEMPT');
+              }
             }
         }
     });
