@@ -11,10 +11,11 @@ function login(){
     let user = $('#username').val();
     let pass = $('#password').val();
     var jData = JSON.stringify({username:user, password:pass});
+    console.log("Login attempt!");
     $.ajax({
-        url: '/app/login/',
+        url: '/app/login/' + user + "/" + pass,
         data: jData,
-        method: 'POST',
+        method: 'GET',
         contentType: 'application/json',
         success: (result) => {
             if(result == 'success'){
@@ -22,9 +23,6 @@ function login(){
             }
             else{
                 $('error_message').html('Error: Please check username or password');
-//i clear the fields but if we do decide to carry this over to the create acc page we can delete
-                $('#username').val('');
-                $('#password').val('');
             }
         }
     });
