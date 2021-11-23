@@ -14,7 +14,7 @@ function login(){
     $.ajax({
         url: '/app/login/',
         data: jData,
-        method: 'POST',
+        method: 'GET',
         contentType: 'application/json',
         success: (result) => {
             if(result == 'success'){
