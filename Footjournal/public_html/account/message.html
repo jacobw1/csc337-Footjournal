@@ -13,17 +13,22 @@
       <button type="button" id="help" onclick="window.location.href='help.html'">Help</button>
       <button type="button" id="message" onclick="window.location.href='message.html'">message</button>
     </div>
-    <div id="post_container">
-      <!-- Change src to current users src pfp and username-->
-      <img class="pfp_post" src="test-img/pfp_1.jpg" alt="test pfp">
-      <div class="username_post">
-        test username
+    <div id="message_content">
+      <!-- this is a template for messages -->
+      <div class="message">
+        <img class="message_pfp" src="test-img/pfp_2.jpg" alt="test">
+        <div class="message_username">
+          test_username:
+        </div>
+        <div class="message">
+          this is going to be a message
+        </div>
       </div>
-      <textarea id="post_content" name="text_content" rows="5" cols="70"></textarea>
-      <label for="profilepicture">Image:</label>
-      <input type="file" id="post_photo" accept="image/*" name="photo" >
-      <br>
-      <button type="button" class="button_post">Post</button>
+      <!-- end of template -->
+    </div>
+    <div id="message_creation">
+      <input type="text" name="new_message" value="">
+      <button type="button" name="send_message">Send</button>
     </div>
   </body>
 </html>

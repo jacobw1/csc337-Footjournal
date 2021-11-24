@@ -22,7 +22,7 @@ function login(){
                 window.location.href = '/account/home.html';
             }
             else{
-                $('error_message').html('Error: Please check username or password');
+                $('#error_message').html('Error: Please check username or password');
             }
         }
     });
@@ -38,7 +38,7 @@ function createUser(){
     let bday = $('birthday').val();
     var jData = JSON.stringify({name:deno, username:user, password:pass, birthday:bday});
     */
-    newAcc = new FormData($('#accCreate')); //add a <form></form> in html ? 
+    newAcc = new FormData($('#accCreate')); //add a <form></form> in html ?
     $.ajax({
         url: '/app/create/',
         data: newAcc,
