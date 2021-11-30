@@ -304,3 +304,75 @@ input[type="file"]{
 }
 
 /* styling for messages*/
+#message_general{
+  height: 60vh;
+  width: 50vw;
+  position: fixed;
+  bottom: 20vh;
+  left:0;
+  background-color: #AECBEB;
+  border: solid black 1px;
+  text-align: center;
+  overflow-y: scroll;
+}
+
+#message_other{
+  height: 60vh;
+  width: 50vw;
+  position: fixed;
+  bottom:20vh;
+  right:0;
+  background-color: #AECBEB;
+  border: solid black 1px;
+  text-align: center;
+  overflow-y: scroll;
+}
+
+.message_creation{
+  width: 50vw;
+  height: 20vh;
+  background-color: #71A5DE;
+}
+
+.message_creation button{
+  margin: 20px;
+  padding: 10px 24px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+  display: inline-block;
+}
+
+.message_creation button:hover{
+  background-color: #AECBEB;
+}
+
+.message_creation input{
+  width: 50%;
+  margin: 20px;
+  background-color: #AECBEB;
+}
+
+#general_creation{
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
+
+#other_creation{
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+}
+
+.message_post{
+  width: 75%;
+  height: auto;
+  display: inline-block;
+  text-align: left;
+}
+
+
+.message_post h3{
+  margin: 0;
+}

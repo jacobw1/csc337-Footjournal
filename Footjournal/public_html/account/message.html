@@ -13,22 +13,49 @@
       <button type="button" id="help" onclick="window.location.href='help.html'">Help</button>
       <button type="button" id="message" onclick="window.location.href='message.html'">message</button>
     </div>
-    <div id="message_content">
-      <!-- this is a template for messages -->
-      <div class="message">
-        <img class="message_pfp" src="test-img/pfp_2.jpg" alt="test">
-        <div class="message_username">
-          test_username:
+    <div id="message_general">
+      <h1>General</h1>
+      <div id="general_content">
+        <!-- start of template-->
+        <div class="message_post">
+          <h3>username</h3>
+          <div>msall short post. </div>
         </div>
-        <div class="message">
-          this is going to be a message
+        <div class="message_post">
+          <h3>username</h3>
+          <div>this message is hopefully less than 50 characters</div>
+        </div>
+        <div class="message_post">
+          <h3>username</h3>
+          <div>  one two theree four five six seven eight nine ten even asdf.</div>
+        </div>
+        <div class="message_post">
+          <h3>username</h3>
+          <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum..</div>
+        </div>
+        <div class="message_post">
+          <h3>username</h3>
+          <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum..</div>
         </div>
       </div>
-      <!-- end of template -->
+        <!-- end of template -->
+      <div class="message_creation" id="general_creation">
+        <input type="text" name="new_general_message" value="">
+        <button type="button" name="send_general_message">Post to general</button>
+      </div>
     </div>
-    <div id="message_creation">
-      <input type="text" name="new_message" value="">
-      <button type="button" name="send_message">Send</button>
+    <div id="message_other">
+      <h1>Other</h1>
+      <div id= other_content>
+
+      </div>
+      <div class="message_creation" id="other_creation">
+        <input type="text" name="new_other_message" value="">
+        <button type="button" name="send_other_message">post to other</button>
+      </div>
     </div>
+
   </body>
 </html>
