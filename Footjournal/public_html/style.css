@@ -111,6 +111,7 @@ input[type="file"]{
   left:20%;
   background-color: #AECBEB;
   text-align: center;
+  overflow-y: scroll;
 }
 
 
