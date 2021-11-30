@@ -96,6 +96,7 @@ input[type="file"]{
 #weather{
   height: 80vh;
   width: 20vw;
+  overflow-y: scroll;
   position: fixed;
   left:0;
   bottom:0;
