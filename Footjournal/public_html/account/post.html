@@ -9,9 +9,9 @@
     <div id="Footjournal_home">
       <h1 onclick="window.location.href='home.html'">Footjournal</h1>
       <button type="button" id="post" onclick="window.location.href='post.html'">Post</button>
-      <button type="button" id="account" onclick="window.location.href='account.html'">Account</button>
-      <button type="button" id="help" onclick="window.location.href='help.html'">Help</button>
-      <button type="button" id="message" onclick="window.location.href='message.html'">message</button>
+      <button type="button" id="account">Account</button>
+      <button type="button" id="help">Help</button>
+      <button type="button" id="message">message</button>
     </div>
     <div id="post_container">
       <!-- Change src to current users src pfp and username-->
@@ -19,11 +19,13 @@
       <div class="username_post">
         test username
       </div>
-      <textarea id="post_content" name="text_content" rows="5" cols="60"></textarea>
-      <label for="profilepicture">Image:</label>
-      <input type="file" id="post_photo" accept="image/*" name="photo" >
-      <br>
-      <button type="button" class="button_post">Post</button>
+      <form action="/create/post" method="post" enctype="multipart/form-data">
+        <textarea id="post_content" name="text_content" rows="5" cols="60"></textarea>
+        <label for="profilepicture">Image:</label>
+        <input type="file" id="post_photo" accept="image/*" name="photo" >
+        <br>
+        <input type="submit" value="Post!">
+      </form>
     </div>
   </body>
 </html>
