@@ -18,25 +18,21 @@
     <div id="container">
       <div id="login">
         <h1>Create an Account</h1>
-        <form action="/create/account" method="post" enctype="multipart/form-data">
+	    <form action="/create/account" method="post" enctype="multipart/form-data">
         <label for="name">Name:</label>
-        <input type="text" id="name" value="">
+        <input type="text" id="name" name="name" value="">
         <br>
         <label for="username">Username:</label>
-        <input type="text" id="username_create" value="">
+        <input type="text" id="username_create" name="username" value="">
         <br>
         <label for="password">Password:</label>
-        <input type="text" id="password_create" value="">
+        <input type="text" id="password_create" name="password" value="">
         <br>
-        <label for="birthday">Birthday:</label>
-        <input type="date" id="birthday" name="birthday">
-        <br>
-        <label for="profilepicture"> Profile Picture:</label>
-        <input type="file" id="photo" accept="image/*" name="photo" >
-        <br>
-          <button type="button" value="Create Account!">Create Account!</button>
-        </form>
-      </div>
+	      <label for="profilepicture"> Profile Picture:</label>
+	      <input type="file" id="photo" accept="image/*" name="photo" >
+        <input type="submit" value="Create Account!">
+      </form>
+    </div>
     </div>
   </body>
 </html>
