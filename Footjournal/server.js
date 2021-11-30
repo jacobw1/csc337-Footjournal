@@ -73,11 +73,11 @@ var Users = mongoose.model('users', userSchema);
 //Schema for Posts
 var postSchema = new Schema({
     username: String,
+    name: String,
     profilePicture: String,
     body: String,
     image: String,
     date: String,
-    isCommentable: Number,
     likeCount: Number,
     likeBy: [{type:mongoose.Types.ObjectId, ref:'Users'}],
     comments: [{type:mongoose.Types.ObjectId, ref:'Comments'}]
@@ -176,7 +176,7 @@ app.get('/app/login/:username/:password', (req, res) => {
               attmpt = data.digest('hex');
               if(attmpt == result[0].hash){
                 createSession(user);
-                res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
+                res.cookie("login", {username: user, name: result[0].name, profilePicture: result[0].profilePicture},{maxAge: 300000}); //5 minute cookie life
                 res.send('success');
               }
               else{
@@ -228,44 +228,22 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
 });
 
 app.post('/create/post', upload.single('photo'), (req, res) => {
-  postTime = (new Date(Date.now())).toLocaleString();
-  var entry = new Posts({
-      title: req.body.title,
-      body: req.body.body,
-      image: req.body.image,
-      date: postTime,
-      isCommentable: req.body.bool,
-      likeCount: 0,
-  });
-  entry.save((err) => {
-      if(err){
-          console.log('ERROR SAVING POST AT DB');
-          res.send('ERROR SAVING POST AT DB')
-      }
-      res.send('success');
-  });
+  //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
+  var postTime = (new Date(Date.now())).toLocaleString();
+  var user = req.cookies.login.username;
+  var name = req.cookies.login.name;
+  var pp = req.cookies.login.profilePicture;
   if (req.file) {
-    res.end("Posting wtih image");
-  } else {
-    res.end("Posting without image");
-  }
-});
-
-
-/*
-Post section
-*/
-//*******need to accom. for multer ******* upload.single(''); i think
-app.post('/account/create/post', (req,res) => {
-    //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
-    postTime = (new Date(Date.now())).toLocaleString();
     var entry = new Posts({
-        title: req.body.title,
+        username: user,
+        name: name,
+        profilePicture: pp,
         body: req.body.body,
-        image: req.body.image,
+        image: req.file.filename,
         date: postTime,
-        isCommentable: req.body.bool,
         likeCount: 0,
+        likeBy: [],
+        comments: []
     });
     entry.save((err) => {
         if(err){
@@ -274,6 +252,26 @@ app.post('/account/create/post', (req,res) => {
         }
         res.send('success');
     });
+  } else {
+    var entry = new Posts({
+        username: user,
+        name: name,
+        profilePicture: pp,
+        body: req.body.body,
+        image: undefined,
+        date: postTime,
+        likeCount: 0,
+        likeBy: [],
+        comments: []
+    });
+    entry.save((err) => {
+        if(err){
+            console.log('ERROR SAVING POST AT DB');
+            res.send('ERROR SAVING POST AT DB')
+        }
+        res.send('success');
+    });
+  }
 });
 
 //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
