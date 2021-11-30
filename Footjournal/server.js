@@ -15,14 +15,17 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
-const port = 80;
-const app = express();
 
-//const upload = multer({dest:''}); <- multer thing on docs idk if needed
+const upload = multer({dest: 'uploads/images'});
+const app = express();
+const port = 80;
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 app.use(cookieParser());
-app.use(express.json()); //parses incoming JSON on arrival
-app.use('/account/*', auth);
-app.use(express.static('public_html'));
+//app.use(express.json()); //parses incoming JSON on arrival
+//app.use('/account/*', auth);
 app.get('/', (req, res) => { res.redirect('/app/index.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
@@ -47,7 +50,7 @@ conn.on('error', console.error.bind(console, 'connection error: '));
 
 
 /*
-The creation of a Schema object that will act as our skeleton structure to preform entries into our 
+The creation of a Schema object that will act as our skeleton structure to preform entries into our
 Mongo database. When the object structure is layed out, a mongoose.model() object is created
 that holds our created Schema and have entering data be modeled against it.
 */
@@ -57,7 +60,6 @@ var userSchema = new Schema({
     username: String,
     salt: String,
     hash: String,
-    birthday: String,
     profilePicture: String,
     followers: [{type:mongoose.Types.ObjectId, ref:'Users'}],
     following: [{type:mongoose.Types.ObjectId, ref:'Users'}],
@@ -151,7 +153,7 @@ function auth(req, res, next){
 
 
 /*
-User creation and login section, send either a POST or GET request respectively to either confirm an 
+User creation and login section, send either a POST or GET request respectively to either confirm an
 existing user and allow them to sign-in or create a brand new user
 */
 //we can change this to better accommodate a more reliable user login i just copied what Ben did tbh*******
@@ -163,11 +165,12 @@ app.get('/app/login/:username/:password', (req, res) => {
             res.send('ERROR LOGGING IN');
         }
         else{
-            if (result.length === 0){
-              res.send("INCORRECT LOGIN ATTEMPT");
+	    if (result.length === 0){
+	      res.send("INCORRECT LOGIN ATTEMPT");
             } else {
-              var data = hash.update(pss + result[0].salt, 'utf-8');//same asyc probs possiblities
-              var attmpt = data.digest('hex');
+	      var toHash = pss + result[0].salt;
+              data = hash.update(toHash, 'utf-8');//same asyc probs possiblities
+              attmpt = data.digest('hex');
               if(attmpt == result[0].hash){
                 createSession(user);
                 res.cookie("login", {username: user},{maxAge: 300000}); //5 minute cookie life
@@ -181,11 +184,13 @@ app.get('/app/login/:username/:password', (req, res) => {
     });
 });
 
-//*******need to accom. for multer *******
-app.post('/app/create/', (req,res) => {
+app.post('/create/account', upload.single('photo'), (req, res) => {
+  if (req.file) {
+    console.log(req.body);
     pass = req.body.password;
-    var nacl = crypto.randomInt(100000000);
-    data = hash.update(pass + nacl, 'utf-8'); // would methods be skippin cause async ?
+    var nacl = Math.floor(Math.random() * 1000000000000000);
+    var toHash = pass + nacl;
+    data = hash.update(toHash, 'utf-8'); // would methods be skippin cause async ?
     spud = data.digest('hex'); // can put all of these in a call back if so tho
     Users.findOne({'username':req.body.username}).exec((err, result) => {
         if(err){
@@ -197,21 +202,26 @@ app.post('/app/create/', (req,res) => {
                 username: req.body.username,
                 salt: nacl,
                 hash: spud,
-                birthday: req.body.birthday,
-                profilePicture: req.body.image
+                profilePicture: req.file.filename,
+		            followers: [],
+		            following: [],
+		            likes: [],
+		            posts: []
             });
             entry.save((err) => {
                 if(err){
                     console.log('ERROR CREATING NEW USER');
                     res.send('ERROR CREATING NEW USER');
                 }
-                res.send('success');
+                res.redirect('/app/index.html')
             });
         }
         else{
             res.end('USERNAME ALREADY IN USE');
         }
     });
+  }
+  else throw 'error';
 });
 
 
@@ -306,7 +316,7 @@ app.get('/account/get/myPosts', (req, res) => {
                 }
             });
         }
-    });  
+    });
 });
 
 //searching all posts in case we want to implement something like this with maybe hashtags or somethin
@@ -317,7 +327,7 @@ app.get('/account/search/posts/:KEYWORDS', (req,res) => {
             console.log('err looking for user in purchases');
         }
         res.end(JSON.stringify(results, null, 2));
-    });    
+    });
 });
 
 
@@ -427,12 +437,7 @@ app.get('/app/get/likes', (req, res) => {
             });
         }
     });
-}); 
+});
 
+app.use(express.static('public_html'));
 app.listen(port, () => console.log("App is listening"));
-
-
-/*
-Misc.
-*/
-//
