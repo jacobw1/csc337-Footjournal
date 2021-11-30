@@ -4,6 +4,8 @@
     <meta charset="UTF-8"/>
     <title>Footjournal Home</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../jquery.js"></script>
+    <script src="client.js"> </script>
   </head>
   <body>
     <div id="Footjournal_home">
@@ -15,24 +17,9 @@
     </div>
 
     <div id="content">
-      <!-- template for text post -->
-      <div class="text_post">
-          <img class="pfp_post" src="test-img/pfp_1.jpg" alt="test pfp">
-          <div class="username_post">
-            test username
-          </div>
-          <div class="content_post">
-            This is what a post will look like. you have to keep the class names consistent
-            so the styling will apply to them. when we get to the disabling comments we can
-            see how to style that.
-          </div>
 
-          <button type="button" class="button_post">Like</button>
-          <button type="button" class="button_post">Comment</button>
-          <input type="text" id="comment" name="comment" value="">
-      </div>
-      <!-- end of template -->
     </div>
+    
     <div id="suggest">
       suggest following
       <!-- template for suggest -->
@@ -52,5 +39,7 @@
       <div id="cont_5a4961727b011cd22e904b7961205322"><script type="text/javascript" async src="https://www.theweather.com/wid_loader/5a4961727b011cd22e904b7961205322"></script></div>
       <div id="cont_c471f1b9fe60442108ec3d4e336be970"><script type="text/javascript" async src="https://www.theweather.com/wid_loader/c471f1b9fe60442108ec3d4e336be970"></script></div>
     </div>
+
+    <script> getPosts() </script>
   </body>
 </html>
