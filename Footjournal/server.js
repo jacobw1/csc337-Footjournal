@@ -4,6 +4,8 @@ CSC 337
 Final Project -- Footjournal
 server.js
 **Short desc. of server-side processes**
+Testing the reupload feature
+LOL
 */
 
 
@@ -70,11 +72,12 @@ var Users = mongoose.model('users', userSchema);
 
 //Schema for Posts
 var postSchema = new Schema({
-    title: String,
+    username: String,
+    profilePicture: String,
     body: String,
     image: String,
     date: String,
-    isCommentable: Boolean, //differs from schema on footjournal can change if u guys want*********
+    isCommentable: Number,
     likeCount: Number,
     likeBy: [{type:mongoose.Types.ObjectId, ref:'Users'}],
     comments: [{type:mongoose.Types.ObjectId, ref:'Comments'}]
@@ -224,6 +227,30 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
   else throw 'error';
 });
 
+app.post('/create/post', upload.single('photo'), (req, res) => {
+  postTime = (new Date(Date.now())).toLocaleString();
+  var entry = new Posts({
+      title: req.body.title,
+      body: req.body.body,
+      image: req.body.image,
+      date: postTime,
+      isCommentable: req.body.bool,
+      likeCount: 0,
+  });
+  entry.save((err) => {
+      if(err){
+          console.log('ERROR SAVING POST AT DB');
+          res.send('ERROR SAVING POST AT DB')
+      }
+      res.send('success');
+  });
+  if (req.file) {
+    res.end("Posting wtih image");
+  } else {
+    res.end("Posting without image");
+  }
+});
+
 
 /*
 Post section
@@ -283,6 +310,7 @@ app.post('/account/like/post', (req, res) => {
 
 //getting all the posts
 app.get('/account/get/posts', (req, res) => {
+    console.log("Getting posts");
     Posts.find({}).exec((err, results) => {
         if(err){
             console.log('PROBLEM GETTING ALL POSTS');
