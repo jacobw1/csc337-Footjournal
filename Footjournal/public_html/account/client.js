@@ -30,14 +30,26 @@ function getPosts(){
     });
 }
 
+function setUserInfo(){
+    $.ajax({
+        url: '/get/user',
+        method: 'GET',
+        contentType: 'application/json',
+        success: (result) => {
+            var user = JSON.parse(result);
+            $('.username_post').text(user.name);
+        }
+    });
+}
+
 
 function buildPostHTMLDiv(post, bool){
   let str = "<div class='text_post'>";
-  str += "<img src='" + post.profilePicture + "' width='40' height='40'>";
+  str += "<img src='../" + post.profilePicture + "' width='30' height='30'>";
   str += "<div class='username_post'>" + post.name + "</div>";
   str += "<div class='content_post'>" + post.body + "<br>";
   if (bool){
-    str += "<img src='" + post.image + "' width='150' height='150'> <br>";
+    str += "<img src='../" + post.image + "' width='350' height='250'> <br>";
   }
   str += "</div>";
   str += "<div> Likes: " + post.likeCount + "</div>"
