@@ -229,6 +229,7 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
 
 app.post('/create/post', upload.single('photo'), (req, res) => {
   //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
+  console.log(req.body);
   var postTime = (new Date(Date.now())).toLocaleString();
   var user = req.cookies.login.username;
   var name = req.cookies.login.name;
@@ -238,7 +239,7 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
         username: user,
         name: name,
         profilePicture: pp,
-        body: req.body.body,
+        body: req.body.text_content,
         image: req.file.filename,
         date: postTime,
         likeCount: 0,
@@ -248,16 +249,16 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
     entry.save((err) => {
         if(err){
             console.log('ERROR SAVING POST AT DB');
-            res.send('ERROR SAVING POST AT DB')
+            res.send('ERROR SAVING POST AT DB');
         }
-        res.send('success');
+        res.redirect('/account/home.html');
     });
   } else {
     var entry = new Posts({
         username: user,
         name: name,
         profilePicture: pp,
-        body: req.body.body,
+        body: req.body.text_content,
         image: undefined,
         date: postTime,
         likeCount: 0,
@@ -269,7 +270,7 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
             console.log('ERROR SAVING POST AT DB');
             res.send('ERROR SAVING POST AT DB')
         }
-        res.send('success');
+        res.redirect('/account/home.html');
     });
   }
 });
@@ -465,5 +466,11 @@ app.get('/app/get/likes', (req, res) => {
     });
 });
 
+app.get('/get/user', (req, res) => {
+  res.end(JSON.stringify(req.cookies.login));
+});
+
 app.use(express.static('public_html'));
+app.use(express.static('uploads/images'));
+
 app.listen(port, () => console.log("App is listening"));
