@@ -4,6 +4,8 @@
     <meta charset="UTF-8"/>
     <title>Footjournal Post</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../jquery.js"></script>
+    <script src="client.js"> </script>
   </head>
   <body>
     <div id="Footjournal_home">
@@ -14,36 +16,20 @@
       <button type="button" id="message" onclick="window.location.href='message.html'">message</button>
     </div>
     <div id="account_info">
-      <img src="test-img/pfp_1.jpg" id="account_pfp" alt="test image">
+      <img src="" id="account_pfp" alt="test image">
       <div id="account_username">
-        test_username
+
       </div>
       <div id="account_followers">
-        followers: 12
+
       </div>
       <div id="account_following">
-        following: 103
+
       </div>
     </div>
     <div id="account_posts">
-      <div class="text_post">
-          <img class="pfp_post" src="test-img/pfp_1.jpg" alt="test pfp">
-          <div class="username_post">
-            test username
-          </div>
-          <div class="content_post">
-            This is what a post will look like. you have to keep the class names consistent
-            so the styling will apply to them. when we get to the disabling comments we can
-            see how to style that.
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
-            velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </div>
-
-          <button type="button" class="button_post">Like</button>
-          <button type="button" class="button_post">Comment</button>
-      </div>
+      
     </div>
+    <script> setAccountInfo() </script>
   </body>
 </html>
