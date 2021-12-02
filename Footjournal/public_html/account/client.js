@@ -14,18 +14,21 @@ function getPosts(){
         method: 'GET',
         contentType: 'application/json',
         success: (result) => {
-            console.log(result);
-            var posts = JSON.parse(result);
-            var bigDiv = "<div class='allPosts'>";
-            for (i in posts){
-              if (posts[i].image === undefined){
-                bigDiv += buildPostHTMLDiv(posts[i], false, true);
-              } else {
-                bigDiv += buildPostHTMLDiv(posts[i], true, true);
+            if (result.charAt(0) === '<'){
+              window.location.href = '/app/index.html';
+            } else {
+              var posts = JSON.parse(result);
+              var bigDiv = "<div class='allPosts'>";
+              for (i in posts){
+                if (posts[i].image === undefined){
+                  bigDiv += buildPostHTMLDiv(posts[i], false, true);
+                } else {
+                  bigDiv += buildPostHTMLDiv(posts[i], true, true);
+                }
               }
+              bigDiv += "<div>";
+              $('#content').html(bigDiv);
             }
-            bigDiv += "<div>";
-            $('#content').html(bigDiv);
         }
     });
 }
@@ -37,14 +40,17 @@ function setSuggestedFollowers(){
       method: 'GET',
       contentType: 'application/json',
       success: (result) => {
-          let users = JSON.parse(result);
-          var bigDiv = "Suggested Following <div class='allSuggestions'>";
-          for (i in users){
-            bigDiv += buildFriendHTMLDiv(users[i]);
-          }
-          bigDiv += "</div>";
-          $('#suggest').html(bigDiv);
-
+          if (result.charAt(0) === '<'){
+            window.location.href = '/app/index.html';
+          } else {
+            let users = JSON.parse(result);
+            var bigDiv = "Suggested Following <div class='allSuggestions'>";
+            for (i in users){
+              bigDiv += buildFriendHTMLDiv(users[i]);
+            }
+            bigDiv += "</div>";
+            $('#suggest').html(bigDiv);
+        }
       }
   });
 }
@@ -56,27 +62,30 @@ function setAccountInfo(){
       method: 'GET',
       contentType: 'application/json',
       success: (result) => {
-          let user = JSON.parse(result);
-          console.log(user)
-          console.log("../" + user.profilePicture);
-          $('#account_pfp').attr("src", "../" + user.profilePicture);
-          $('#account_username').text(user.name);
-          $('#account_followers').text("Followers: " + user.followers.length);
-          $('#account_following').text("Following: " +user.following.length);
+          if (result.charAt(0) === '<'){
+            window.location.href = '/app/index.html';
+          } else {
+            let user = JSON.parse(result);
+            $('#account_pfp').attr("src", "../" + user.profilePicture);
+            $('#account_username').text(user.name);
+            $('#account_followers').text("Followers: " + user.followers.length);
+            $('#account_following').text("Following: " +user.following.length);
 
-          var posts = user.posts;
-          console.log("POSTS: ")
-          console.log(posts);
-          var bigDiv = "<div class='allPosts'>";
-          for (i in posts){
-            if (posts[i].image === undefined){
-              bigDiv += buildPostHTMLDiv(posts[i], false, false);
-            } else {
-              bigDiv += buildPostHTMLDiv(posts[i], true, false);
+            var posts = user.posts;
+            console.log("POSTS: ")
+            console.log(posts);
+            var bigDiv = "<div class='allPosts'>";
+            for (i in posts){
+              if (posts[i].image === undefined){
+                bigDiv += buildPostHTMLDiv(posts[i], false, false);
+              } else {
+                bigDiv += buildPostHTMLDiv(posts[i], true, false);
+              }
             }
+            bigDiv += "</div>";
+            $('#account_posts').html(bigDiv);
           }
-          bigDiv += "</div>";
-          $('#account_posts').html(bigDiv);
+
       }
   });
 }
@@ -87,9 +96,13 @@ function setUserInfo(){
         method: 'GET',
         contentType: 'application/json',
         success: (result) => {
-            var user = JSON.parse(result);
-            $('#post_pfp').attr("src", "../" + user.profilePicture);
-            $('.username_post').text(user.name);
+            if (result.charAt(0) === '<'){
+              window.location.href = '/app/index.html';
+            } else {
+              var user = JSON.parse(result);
+              $('#post_pfp').attr("src", "../" + user.profilePicture);
+              $('.username_post').text(user.name);
+            }
         }
     });
 }
@@ -108,7 +121,7 @@ function likePost(idOfPost){
               window.location.href = '/account/home.html';
           }
           else{
-              console.log("Error liking");
+              window.location.href = '/app/index.html';
           }
       }
   });
@@ -130,7 +143,7 @@ function commentOnPost(idOfPost){
               window.location.href = '/account/home.html';
           }
           else{
-              console.log("Error Commenting");
+              window.location.href = '/app/index.html';
           }
       }
   });
@@ -150,7 +163,7 @@ function followUser(idOfUser){
               window.location.href = '/account/home.html';
           }
           else{
-              console.log("Error Commenting");
+              window.location.href = '/app/index.html';
           }
       }
   });
