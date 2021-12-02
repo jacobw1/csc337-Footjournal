@@ -63,12 +63,12 @@ var userSchema = new Schema({
     salt: String,
     hash: String,
     profilePicture: String,
-    followers: [{type:mongoose.Types.ObjectId, ref:'Users'}],
-    following: [{type:mongoose.Types.ObjectId, ref:'Users'}],
-    likes: [{type:mongoose.Types.ObjectId, ref:'Posts'}],
-    posts: [{type:mongoose.Types.ObjectId, ref:'Posts'}]
+    followers: [{type:mongoose.Schema.Types.ObjectId, ref:'Users'}],
+    following: [{type:mongoose.Schema.Types.ObjectId, ref:'Users'}],
+    likes: [{type:mongoose.Schema.Types.ObjectId, ref:'Posts'}],
+    posts: [{type:mongoose.Schema.Types.ObjectId, ref:'Posts'}]
 });
-var Users = mongoose.model('users', userSchema);
+var Users = mongoose.model('Users', userSchema);
 
 //Schema for Posts
 var postSchema = new Schema({
@@ -80,19 +80,18 @@ var postSchema = new Schema({
     image: String,
     date: String,
     likeCount: Number,
-    likeBy: [{type:mongoose.Types.ObjectId, ref:'Users'}],
-    comments: [{type:mongoose.Types.ObjectId, ref:'Comments'}]
+    comments: [{type:mongoose.Schema.Types.ObjectId, ref:'Comments'}]
 });
-var Posts = mongoose.model('posts', postSchema);
+var Posts = mongoose.model('Posts', postSchema);
 
 //Schema for Comments
 var comSchema = new Schema({
+    name: String,
     username: String,
     body: String,
     date: String,
-    likeCount: String // i think its the post id type unless it has a special one
 });
-var Comments = mongoose.model('comments', comSchema);
+var Comments = mongoose.model('Comments', comSchema);
 
 //Schema for Message
 var msgSchema = new Schema({
@@ -101,7 +100,7 @@ var msgSchema = new Schema({
     body: String,
     date: String
 });
-var Messages = mongoose.model('msgs', msgSchema);
+var Messages = mongoose.model('Msgs', msgSchema);
 
 
 /*
@@ -237,47 +236,74 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
   var user = req.cookies.login.username;
   var name = req.cookies.login.name;
   var pp = req.cookies.login.profilePicture;
-  if (req.file) {
-    var entry = new Posts({
-        author: ident,
-        username: user,
-        name: name,
-        profilePicture: pp,
-        body: req.body.text_content,
-        image: req.file.filename,
-        date: postTime,
-        likeCount: 0,
-        likeBy: [],
-        comments: []
-    });
-    entry.save((err) => {
-        if(err){
-            console.log('ERROR SAVING POST AT DB');
-            res.send('ERROR SAVING POST AT DB');
-        }
-        res.redirect('/account/home.html');
-    });
-  } else {
-    var entry = new Posts({
-        author: ident,
-        username: user,
-        name: name,
-        profilePicture: pp,
-        body: req.body.text_content,
-        image: undefined,
-        date: postTime,
-        likeCount: 0,
-        likeBy: [],
-        comments: []
-    });
-    entry.save((err) => {
-        if(err){
-            console.log('ERROR SAVING POST AT DB');
-            res.send('ERROR SAVING POST AT DB')
-        }
-        res.redirect('/account/home.html');
-    });
-  }
+  var posts;
+  Users.findOne({'username':user}).exec((err, result) => {
+      if(err){
+          console.log('ERROR');
+      }
+      posts = result.posts;
+      if (req.file) {
+        var entry = new Posts({
+            author: ident,
+            username: user,
+            name: name,
+            profilePicture: pp,
+            body: req.body.text_content,
+            image: req.file.filename,
+            date: postTime,
+            likeCount: 0,
+            likeBy: [],
+            comments: []
+        });
+        entry.save((err) => {
+            if(err){
+                console.log('ERROR SAVING POST AT DB');
+                res.send('ERROR SAVING');
+            }
+            posts.push(entry._id);
+            result.save((err) => {
+                if(err){
+                    console.log('ERROR');
+                    res.send('ERROR');
+                }
+                else{
+                    console.log('post SUCCESSFUL');
+                    res.redirect('/account/home.html');
+                }
+            });
+        });
+      } else {
+        var entry = new Posts({
+            author: ident,
+            username: user,
+            name: name,
+            profilePicture: pp,
+            body: req.body.text_content,
+            image: undefined,
+            date: postTime,
+            likeCount: 0,
+            likeBy: [],
+            comments: []
+        });
+        entry.save((err) => {
+            if(err){
+                console.log('ERROR SAVING POST AT DB');
+                res.send('ERROR SAVING');
+            }
+            posts.push(entry._id);
+            result.save((err) => {
+                if(err){
+                    console.log('ERROR');
+                    res.send('ERROR');
+                }
+                else{
+                    console.log('post SUCCESSFUL');
+                    res.redirect('/account/home.html');
+                }
+            });
+        });
+      }
+  });
 });
 
 //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
@@ -296,7 +322,7 @@ app.post('/account/like/post', (req, res) => {
                 }
                 else{
                     result.likes.push(req.body.id);
-                    user.save((err) => {
+                    result.save((err) => {
                         if(err){
                             console.log('ERROR SAVING LIKE TO USER');
                             res.send('ERROR SAVING LIKE TO USER');
@@ -330,10 +356,12 @@ app.get('/account/get/posts', (req, res) => {
                     acUser.end('Error filtering through posts');
                 }
                 else{
+                    console.log(acUser);
+                    console.log(results);
                     for(let i=0; i < results.length; i++){
-                        console.log(JSON.stringify(acUser.username) + ' this the curUser');
-                        console.log(JSON.stringify(results[i].username) + ' this the cur comment\'s user');
-                        console.log(JSON.stringify(acUser.following));
+                        // console.log(JSON.stringify(acUser.username) + ' this the curUser');
+                        // console.log(JSON.stringify(results[i].username) + ' this the cur comment\'s user');
+                        // console.log(JSON.stringify(acUser.following));
                         if(results[i].username == acUser.username){
                             continue;
                         }
@@ -374,6 +402,49 @@ app.get('/account/get/myPosts', (req, res) => {
                     res.end(JSON.stringify(postList, null, 2));
                 }
             });
+        }
+    });
+});
+
+app.post('/account/comment/post', (req, res) => {
+    var name = req.cookies.login.name;
+    var username = req.cookies.login.username;
+    var commentTime = (new Date(Date.now())).toLocaleString();
+    console.log("heyyy");
+    console.log(req.body.id);
+    Posts.findOne({'_id':req.body.id}).exec((err, result) => {
+        if(err){
+            console.log('ERROR CHECKING IF USERNAME AVAILABLE');
+        }
+        console.log("RESULT!");
+        console.log(result);
+        if(result){
+            var entry = new Comments({
+                name: name,
+                username: username,
+                body: req.body.commentContent,
+                date: commentTime
+            });
+            entry.save((err) => {
+                if(err){
+                    console.log('ERROR CREATING NEW USER');
+                    res.send('ERROR CREATING NEW USER');
+                }
+                result.comments.push(entry._id);
+                result.save((err) => {
+                    if(err){
+                        console.log('ERROR SAVING comment TO post');
+                        res.send('ERROR SAVING comment TO post');
+                    }
+                    else{
+                        console.log('comment SUCCESSFUL');
+                        res.redirect('/account/home.html');
+                    }
+                });
+            });
+        }
+        else{
+            res.end('USERNAME ALREADY IN USE');
         }
     });
 });
@@ -496,6 +567,48 @@ app.get('/app/get/likes', (req, res) => {
             });
         }
     });
+});
+
+app.get('/account/get/accountInfo', (req, res) => {
+  var user = req.cookies.login.username;
+  Users.findOne({'username': user}).populate('posts').exec((err, result) => {
+      if (err){
+        res.send("ERROR");
+      } else {
+        res.send(JSON.stringify(result));
+      }
+  });
+});
+
+app.get('/account/get/suggestedFollowing', (req, res) => {
+  var user = req.cookies.login.username;
+  Users.findOne({'username': user}).populate('following').exec((err, result) => {
+      if (err){
+        res.send("ERROR");
+      } else {
+        Users.find({}).exec((err, results) => {
+          var array = [];
+          for (let i = 0; i < results.length; i++){
+            if(results[i].username === user){
+              continue;
+            } else {
+              var following = result.following;
+              console.log(following.length);
+              var bool = true;
+              for (let j = 0; j < following.length; j++){
+                if (results[i].username === following[j].username){
+                  bool = false;
+                }
+              }
+              if (bool){
+                array.push(results[i]);
+              }
+            }
+          }
+          res.send(JSON.stringify(array));
+        });
+      }
+  });
 });
 
 app.get('/get/user', (req, res) => {
