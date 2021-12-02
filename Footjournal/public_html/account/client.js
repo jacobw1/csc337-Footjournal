@@ -19,15 +19,66 @@ function getPosts(){
             var bigDiv = "<div class='allPosts'>";
             for (i in posts){
               if (posts[i].image === undefined){
-                bigDiv += buildPostHTMLDiv(posts[i], false);
+                bigDiv += buildPostHTMLDiv(posts[i], false, true);
               } else {
-                bigDiv += buildPostHTMLDiv(posts[i], true);
+                bigDiv += buildPostHTMLDiv(posts[i], true, true);
               }
             }
             bigDiv += "<div>";
             $('#content').html(bigDiv);
         }
     });
+}
+
+function setSuggestedFollowers(){
+  console.log("Setting account info in client?");
+  $.ajax({
+      url: '/account/get/suggestedFollowing',
+      method: 'GET',
+      contentType: 'application/json',
+      success: (result) => {
+          let users = JSON.parse(result);
+          var bigDiv = "Suggested Following <div class='allSuggestions'>";
+          for (i in users){
+            bigDiv += buildFriendHTMLDiv(users[i]);
+          }
+          bigDiv += "</div>";
+          $('#suggest').html(bigDiv);
+
+      }
+  });
+}
+
+function setAccountInfo(){
+  console.log("Setting account info in client?");
+  $.ajax({
+      url: '/account/get/accountInfo',
+      method: 'GET',
+      contentType: 'application/json',
+      success: (result) => {
+          let user = JSON.parse(result);
+          console.log(user)
+          console.log("../" + user.profilePicture);
+          $('#account_pfp').attr("src", "../" + user.profilePicture);
+          $('#account_username').text(user.name);
+          $('#account_followers').text("Followers: " + user.followers.length);
+          $('#account_following').text("Following: " +user.following.length);
+
+          var posts = user.posts;
+          console.log("POSTS: ")
+          console.log(posts);
+          var bigDiv = "<div class='allPosts'>";
+          for (i in posts){
+            if (posts[i].image === undefined){
+              bigDiv += buildPostHTMLDiv(posts[i], false, false);
+            } else {
+              bigDiv += buildPostHTMLDiv(posts[i], true, false);
+            }
+          }
+          bigDiv += "</div>";
+          $('#account_posts').html(bigDiv);
+      }
+  });
 }
 
 function setUserInfo(){
@@ -37,13 +88,86 @@ function setUserInfo(){
         contentType: 'application/json',
         success: (result) => {
             var user = JSON.parse(result);
+            $('#post_pfp').attr("src", "../" + user.profilePicture);
             $('.username_post').text(user.name);
         }
     });
 }
 
+function likePost(idOfPost){
+  var jData = JSON.stringify({id:idOfPost});
+  console.log("Liking attempt!");
+  $.ajax({
+      url: '/account/like/post',
+      data: jData,
+      method: 'POST',
+      contentType: 'application/json',
+      success: (result) => {
+          console.log(result);
+          if(result == 'success'){
+              window.location.href = '/account/home.html';
+          }
+          else{
+              console.log("Error liking");
+          }
+      }
+  });
+}
 
-function buildPostHTMLDiv(post, bool){
+function commentOnPost(idOfPost){
+  let htmlID = "comment" + idOfPost;
+  var commentContent = $("#" + htmlID).val();
+  var jData = JSON.stringify({commentContent:commentContent, id: idOfPost});
+  console.log("Commenting attempt!");
+  $.ajax({
+      url: '/account/comment/post',
+      data: jData,
+      method: 'POST',
+      contentType: 'application/json',
+      success: (result) => {
+          console.log(result);
+          if(result == 'success'){
+              window.location.href = '/account/home.html';
+          }
+          else{
+              console.log("Error Commenting");
+          }
+      }
+  });
+}
+
+function followUser(idOfUser){
+  var jData = JSON.stringify({id: idOfUser});
+  console.log("Friending attempt!");
+  $.ajax({
+      url: '/app/follow/user',
+      data: jData,
+      method: 'POST',
+      contentType: 'application/json',
+      success: (result) => {
+          console.log(result);
+          if(result == 'success'){
+              window.location.href = '/account/home.html';
+          }
+          else{
+              console.log("Error Commenting");
+          }
+      }
+  });
+}
+
+function buildFriendHTMLDiv(user){
+  console.log(user);
+  let str = "<div class='post_suggest'>";
+  str += "<img src='../" + user.profilePicture + "' alt='test pfp'>";
+  str += "<div class='username_suggest'>" + user.name + "</div>";
+  str += "<button type='button' class='follow_suggest' onclick='followUser(\"" + user._id.toString() + "\")'" + ">Follow</button>";
+  str += "</div>";
+  return str;
+}
+
+
+function buildPostHTMLDiv(post, bool, bool2){
   let str = "<div class='text_post'>";
   str += "<img src='../" + post.profilePicture + "' width='30' height='30'>";
   str += "<div class='username_post'>" + post.name + "</div>";
@@ -52,10 +176,12 @@ function buildPostHTMLDiv(post, bool){
     str += "<img src='../" + post.image + "' width='350' height='250'> <br>";
   }
   str += "</div>";
-  str += "<div> Likes: " + post.likeCount + "</div>"
-  str += "<button type='button' class='button_post'>Like</button>"
-  str += "<button type='button' class='button_post'>Comment</button>"
-  str += "<input type='text' id='comment' name='comment' value=''>"
+  str += "<div> Likes: " + post.likeCount + "  " + post.date + "</div>"
+  if (bool2){
+    str += "<button type='button' class='button_post' onclick='likePost(\"" + post._id.toString() + "\")'" + ">Like</button>";
+    str += "<button type='button' class='button_post' onclick='commentOnPost(\"" + post._id.toString() + "\")'" + ">Comment</button>"
+    str += "<input type='text' id='comment" + post._id.toString() + "' name='comment' value=''>"
+  }
   str += "</div>";
   return str;
 }
