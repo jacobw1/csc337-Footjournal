@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.get('/', (req, res) => { res.redirect('/app/index.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
-const MAX_LOGIN_TIME = 300000; //5 minutes
+const MAX_LOGIN_TIME = 7000; //5 minutes
 
 /*
 The connect() method of the mongoose module object. We preform the actual connection and we
@@ -128,6 +128,13 @@ function createSession(username){
     console.log('session created for ' + username);
 }
 
+
+function doesUserHaveSession(username){
+  console.log("Checking session");
+
+  return (username in sessions)
+}
+
 //Checks to see if a user exists within the map() that holds current in-session users
 function checkSession(username){
     if(sessions.get(username) != undefined){
@@ -172,7 +179,8 @@ app.get('/app/login/:username/:password', (req, res) => {
 	      res.send("INCORRECT LOGIN ATTEMPT");
             } else {
               var toHash = pss + result[0].salt;
-              data = hash.update(toHash, 'utf-8');//same asyc probs possiblities
+              var hash = crypto.createHash('sha512');
+              data = hash.update(toHash, 'utf-8');
               attmpt = data.digest('hex');
               if(attmpt == result[0].hash){
                 createSession(user);
@@ -190,10 +198,10 @@ app.get('/app/login/:username/:password', (req, res) => {
 
 app.post('/create/account', upload.single('photo'), (req, res) => {
   if (req.file) {
-    console.log(req.body);
     pass = req.body.password;
     var nacl = Math.floor(Math.random() * 1000000000000000);
     var toHash = pass + nacl;
+    var hash = crypto.createHash('sha512');
     data = hash.update(toHash, 'utf-8'); // would methods be skippin cause async ?
     spud = data.digest('hex'); // can put all of these in a call back if so tho
     Users.findOne({'username':req.body.username}).exec((err, result) => {
@@ -229,390 +237,356 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
 });
 
 app.post('/create/post', upload.single('photo'), (req, res) => {
-  //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
-  console.log(req.body);
-  var postTime = (new Date(Date.now())).toLocaleString();
-  var ident = req.cookies.login.id;
-  var user = req.cookies.login.username;
-  var name = req.cookies.login.name;
-  var pp = req.cookies.login.profilePicture;
-  var posts;
-  Users.findOne({'username':user}).exec((err, result) => {
-      if(err){
-          console.log('ERROR');
-      }
-      posts = result.posts;
-      if (req.file) {
-        var entry = new Posts({
-            author: ident,
-            username: user,
-            name: name,
-            profilePicture: pp,
-            body: req.body.text_content,
-            image: req.file.filename,
-            date: postTime,
-            likeCount: 0,
-            likeBy: [],
-            comments: []
-        });
-        entry.save((err) => {
-            if(err){
-                console.log('ERROR SAVING POST AT DB');
-                res.send('ERROR SAVING');
-            }
-            posts.push(entry._id);
-            result.save((err) => {
-                if(err){
-                    console.log('ERROR');
-                    res.send('ERROR');
-                }
-                else{
-                    console.log('post SUCCESSFUL');
-                    res.redirect('/account/home.html');
-                }
-            });
-        });
-      } else {
-        var entry = new Posts({
-            author: ident,
-            username: user,
-            name: name,
-            profilePicture: pp,
-            body: req.body.text_content,
-            image: undefined,
-            date: postTime,
-            likeCount: 0,
-            likeBy: [],
-            comments: []
-        });
-        entry.save((err) => {
-            if(err){
-                console.log('ERROR SAVING POST AT DB');
-                res.send('ERROR SAVING');
-            }
-            posts.push(entry._id);
-            result.save((err) => {
-                if(err){
-                    console.log('ERROR');
-                    res.send('ERROR');
-                }
-                else{
-                    console.log('post SUCCESSFUL');
-                    res.redirect('/account/home.html');
-                }
-            });
-        });
-      }
-  });
-});
-
-//will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
-app.post('/account/like/post', (req, res) => {
-    var user = req.cookies.login.username;
-    Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
-        if(err){
-            console.log('ERROR INCREASING LIKE COUNT');
-            res.send('ERROR INCREASING LIKE COUNT');
-        }
-        else{
-            Users.findOne({'username': user}).exec((err, result) => {
-                if(err){
-                    console.log('ERROR IDENTIFYING USER LIKING THIS');
-                    res.send('ERROR IDENTIFYING USER LIKING THIS');
-                }
-                else{
-                    result.likes.push(req.body.id);
-                    result.save((err) => {
-                        if(err){
-                            console.log('ERROR SAVING LIKE TO USER');
-                            res.send('ERROR SAVING LIKE TO USER');
-                        }
-                        else{
-                            console.log('LIKE SUCCESSFUL');
-                            res.send('success');
-                        }
-                    });
-                }
-            });
-        }
-    });
-});
-
-//getting all the posts
-app.get('/account/get/posts', (req, res) => {
-    console.log("Getting posts");
-    curIdent = req.cookies.login.id;
-    curUser = req.cookies.login.username;
-    Posts.find({}).exec((err, results) => {
-        if(err){
-            console.log('PROBLEM GETTING ALL POSTS');
-            res.send('PROBLEM GETTING ALL POSTS');
-        }
-        else{
-            // /*
-            Users.findOne({'username': curUser}).exec((err, acUser) => {
-                if(err){
-                    console.log('Error filtering through posts');
-                    acUser.end('Error filtering through posts');
-                }
-                else{
-                    console.log(acUser);
-                    console.log(results);
-                    for(let i=0; i < results.length; i++){
-                        // console.log(JSON.stringify(acUser.username) + ' this the curUser');
-                        // console.log(JSON.stringify(results[i].username) + ' this the cur comment\'s user');
-                        // console.log(JSON.stringify(acUser.following));
-                        if(results[i].username == acUser.username){
-                            continue;
-                        }
-                        else if(acUser.length != 0 && acUser.following.includes(results[i].author)){
-                            continue;
-                        }
-                        else{
-                            results.splice(i,1);
-                        }
-                    }
-                    //console.log(JSON.stringify(results, null, 2))
-                    console.log('GETTING ALL POSTS SUCCESSFUL');
-                    res.send(JSON.stringify(results, null, 2));
-                }
-            });
-            // */
-            //res.send(JSON.stringify(results, null, 2));
-        }
-    });
-});
-
-//getting all current user's posts
-app.get('/account/get/myPosts', (req, res) => {
-    var user = req.cookies.login.username;
-    Users.findOne({'username': user}).exec((err, result) => {
-        if(err){
-            console.log('ERR LOOKING FOR USER');
-            res.send('ERR LOOKING FOR USER');
-        }
-        else{
-            Posts.find({'_id': {$in:result.posts}}, (err, postList) => {
-                if(err){
-                    console.log('ERR FINDING POSTS FOR USER');
-                    res.send('ERR FINDING POSTS FOR USER');
-                }
-                else{
-                    console.log('success');
-                    res.end(JSON.stringify(postList, null, 2));
-                }
-            });
-        }
-    });
-});
-
-app.post('/account/comment/post', (req, res) => {
-    var name = req.cookies.login.name;
-    var username = req.cookies.login.username;
-    var commentTime = (new Date(Date.now())).toLocaleString();
-    console.log("heyyy");
-    console.log(req.body.id);
-    Posts.findOne({'_id':req.body.id}).exec((err, result) => {
-        if(err){
-            console.log('ERROR CHECKING IF USERNAME AVAILABLE');
-        }
-        console.log("RESULT!");
-        console.log(result);
-        if(result){
-            var entry = new Comments({
+  var c = req.cookies;
+  if (c && c.login) {
+    var username = c.login.username;
+    if (checkSession(username)){
+      //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
+      console.log(req.body);
+      var postTime = (new Date(Date.now())).toLocaleString();
+      var ident = req.cookies.login.id;
+      var user = req.cookies.login.username;
+      var name = req.cookies.login.name;
+      var pp = req.cookies.login.profilePicture;
+      var posts;
+      Users.findOne({'username':user}).exec((err, result) => {
+          if(err){
+              console.log('ERROR');
+          }
+          posts = result.posts;
+          if (req.file) {
+            var entry = new Posts({
+                author: ident,
+                username: user,
                 name: name,
-                username: username,
-                body: req.body.commentContent,
-                date: commentTime
+                profilePicture: pp,
+                body: req.body.text_content,
+                image: req.file.filename,
+                date: postTime,
+                likeCount: 0,
+                likeBy: [],
+                comments: []
             });
             entry.save((err) => {
                 if(err){
-                    console.log('ERROR CREATING NEW USER');
-                    res.send('ERROR CREATING NEW USER');
+                    console.log('ERROR SAVING POST AT DB');
+                    res.send('ERROR SAVING');
                 }
-                result.comments.push(entry._id);
+                posts.push(entry._id);
                 result.save((err) => {
                     if(err){
-                        console.log('ERROR SAVING comment TO post');
-                        res.send('ERROR SAVING comment TO post');
+                        console.log('ERROR');
+                        res.send('ERROR');
                     }
                     else{
-                        console.log('comment SUCCESSFUL');
+                        console.log('post SUCCESSFUL');
                         res.redirect('/account/home.html');
                     }
                 });
             });
+          } else {
+            var entry = new Posts({
+                author: ident,
+                username: user,
+                name: name,
+                profilePicture: pp,
+                body: req.body.text_content,
+                image: undefined,
+                date: postTime,
+                likeCount: 0,
+                likeBy: [],
+                comments: []
+            });
+            entry.save((err) => {
+                if(err){
+                    console.log('ERROR SAVING POST AT DB');
+                    res.send('ERROR SAVING');
+                }
+                posts.push(entry._id);
+                result.save((err) => {
+                    if(err){
+                        console.log('ERROR');
+                        res.send('ERROR');
+                    }
+                    else{
+                        console.log('post SUCCESSFUL');
+                        res.redirect('/account/home.html');
+                    }
+                });
+            });
+          }
+      });
+    } else {
+      console.log("1 issue");
+      res.redirect('/app/index.html');
+    }
+  } else {
+    console.log("2 issue");
+    res.redirect('/app/index.html');
+  }});
+
+    //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
+    app.post('/account/like/post', (req, res) => {
+      var c = req.cookies;
+      if (c && c.login) {
+        var user = c.login.username;
+        if (checkSession(user)){
+          Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
+            if(err){
+              console.log('ERROR INCREASING LIKE COUNT');
+              res.send('ERROR INCREASING LIKE COUNT');
+            }
+            else{
+              Users.findOne({'username': user}).exec((err, result) => {
+                if(err){
+                  console.log('ERROR IDENTIFYING USER LIKING THIS');
+                  res.send('ERROR IDENTIFYING USER LIKING THIS');
+                }
+                else{
+                  result.likes.push(req.body.id);
+                  result.save((err) => {
+                    if(err){
+                      console.log('ERROR SAVING LIKE TO USER');
+                      res.send('ERROR SAVING LIKE TO USER');
+                    }
+                    else{
+                      console.log('LIKE SUCCESSFUL');
+                      res.send('success');
+                    }
+                  });
+                }
+              });
+            }
+          });
+        } else {
+          res.redirect('/account/home.html');
         }
-        else{
-            res.end('USERNAME ALREADY IN USE');
-        }
-    });
+      } else {
+        res.redirect('/account/home.html');
+      }
+  });
+
+//getting all the posts
+app.get('/account/get/posts', (req, res) => {
+  var c = req.cookies;
+  if (c && c.login) {
+    var username = c.login.username;
+    if (checkSession(username)){
+      curIdent = req.cookies.login.id;
+      curUser = req.cookies.login.username;
+      Posts.find({}).exec((err, results) => {
+          if(err){
+              console.log('PROBLEM GETTING ALL POSTS');
+              res.send('PROBLEM GETTING ALL POSTS');
+          }
+          else{
+              // /*
+              Users.findOne({'username': curUser}).exec((err, acUser) => {
+                  if(err){
+                      console.log('Error filtering through posts');
+                      acUser.end('Error filtering through posts');
+                  }
+                  else{
+                      for(let i=0; i < results.length; i++){
+                          if(results[i].username == acUser.username){
+                              continue;
+                          }
+                          else if(acUser.length != 0 && acUser.following.includes(results[i].author)){
+                              continue;
+                          }
+                          else{
+                              results.splice(i,1);
+                          }
+                      }
+                      console.log('GETTING ALL POSTS SUCCESSFUL');
+                      res.send(JSON.stringify(results, null, 2));
+                  }
+              });
+          }
+      });
+    } else {
+      res.redirect('/app/index.html');
+    }
+  } else {
+    res.redirect('/app/index.html');
+  }
 });
 
-//searching all posts in case we want to implement something like this with maybe hashtags or somethin
-app.get('/account/search/posts/:KEYWORDS', (req,res) => {
-    var nKey = decodeURIComponent(req.params.KEYWORDS);
-    Posts.find({'body': {$regex: new RegExp(nKey), $options:'i'}}).exec((err, results) => {
-        if(err){
-            console.log('err looking for user in purchases');
-        }
-        res.end(JSON.stringify(results, null, 2));
-    });
+app.post('/account/comment/post', (req, res) => {
+  var c = req.cookies;
+  if (c && c.login) {
+    var username = c.login.username;
+    if (checkSession(username)){
+      var name = c.login.name;
+      var commentTime = (new Date(Date.now())).toLocaleString();
+      Posts.findOne({'_id':req.body.id}).exec((err, result) => {
+          if(err){
+              console.log('ERROR CHECKING IF USERNAME AVAILABLE');
+          }
+          console.log("RESULT!");
+          console.log(result);
+          if(result){
+              var entry = new Comments({
+                  name: name,
+                  username: username,
+                  body: req.body.commentContent,
+                  date: commentTime
+              });
+              entry.save((err) => {
+                  if(err){
+                      console.log('ERROR CREATING NEW USER');
+                      res.send('ERROR CREATING NEW USER');
+                  }
+                  result.comments.push(entry._id);
+                  result.save((err) => {
+                      if(err){
+                          console.log('ERROR SAVING comment TO post');
+                          res.send('ERROR SAVING comment TO post');
+                      }
+                      else{
+                          res.send('success')
+                      }
+                  });
+              });
+          }
+          else{
+              res.end('USERNAME ALREADY IN USE');
+          }
+      });
+    } else {
+      console.log("boobies1");
+      res.redirect('/app/index.html');
+    }
+  } else {
+    console.log("boobies2");
+    res.redirect('/app/index.html');
+  }
 });
-
 
 /*
 Follow a user, fetching followers + following, and Likes for user
 */
 //will assume follow button has somethin like onClickfunc(objectID) that gets send with the req
 app.post('/app/follow/user', (req, res) => {
-    var user = req.cookies.login.username;
-    Users.findOne({'username': user}).exec((err, curUser) => {
-        if(err){
-            console.log('ERROR IDENTIFYING USER LIKING THIS');
-            res.send('ERROR IDENTIFYING USER LIKING THIS');
-        }
-        else{
-            Users.findOne({'_id':req.body.id}).exec((err, target) => {
-                if(err){
-                    console.log('ERROR FINDING TARGET USER');
-                    res.send('ERROR FINDING TARGET USER');
-                }
-                else{
-                    curUser.following.push(req.body.id);
-                    target.followers.push(curUser._id)//i think is how u access id
-                    //a lot of callback idk if we can skip any of this, couldnt find on stackoverflow if the save callbacks were optional
-                    curUser.save((err) => {
-                        if(err){
-                            console.log('ERROR SAVING AT CURRENT USER');
-                            res.send('ERROR SAVING AT CURRENT USER');
-                        }
-                        else{
-                            target.save((err) => {
-                                if(err){
-                                    console.log('ERROR SAVING AT TARGET USER');
-                                    res.send('ERROR SAVING AT TARGET USER');
-                                }
-                                else {res.send('success');}
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    });
-});
-
-//
-app.get('/app/get/followers', (req, res) => {
-    var user = req.cookies.login.username;
-    Users.findOne({'username': user}).exec((err, result) => {
-        if(err){
-            console.log('ERROR FETCHING USER');
-            res.send('ERROR FETCHING USER');
-        }
-        else{
-            Users.find({'_id':{$in: result.followers}}, (err, followList) => {
-                if(err){
-                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
-                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
-                }
-                else{
-                    res.send(JSON.stringify(followList, null, 2));
-                }
-            });
-        }
-    });
-});
-
-//
-app.get('/app/get/following', (req, res) => {
-    var user = req.cookies.login.username;
-    Users.findOne({'username': user}).exec((err, result) => {
-        if(err){
-            console.log('ERROR FETCHING USER');
-            res.send('ERROR FETCHING USER');
-        }
-        else{
-            Users.find({'_id':{$in: result.following}}, (err, followList) => {
-                if(err){
-                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
-                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
-                }
-                else{
-                    res.send(JSON.stringify(followList, null, 2));
-                }
-            });
-        }
-    });
-});
-
-//
-app.get('/app/get/likes', (req, res) => {
-    var user = req.cookies.login.username;
-    Users.findOne({'username': user}).exec((err, result) => {
-        if(err){
-            console.log('ERROR FETCHING USER');
-            res.send('ERROR FETCHING USER');
-        }
-        else{
-            Users.find({'_id':{$in: result.likes}}, (err, likeList) => {
-                if(err){
-                    console.log('ERROR FETCHING FOLLOWERS FOR USER');
-                    res.send('ERROR FETCHING FOLLOWERS FOR USER');
-                }
-                else{
-                    res.send(JSON.stringify(likeList, null, 2));
-                }
-            });
-        }
-    });
+  var c = req.cookies;
+  if (c && c.login) {
+    var user = c.login.username;
+    if (checkSession(user)){
+      Users.findOne({'username': user}).exec((err, curUser) => {
+          if(err){
+              console.log('ERROR IDENTIFYING USER LIKING THIS');
+              res.send('ERROR IDENTIFYING USER LIKING THIS');
+          }
+          else{
+              Users.findOne({'_id':req.body.id}).exec((err, target) => {
+                  if(err){
+                      console.log('ERROR FINDING TARGET USER');
+                      res.send('ERROR FINDING TARGET USER');
+                  }
+                  else{
+                      curUser.following.push(req.body.id);
+                      target.followers.push(curUser._id)
+                      curUser.save((err) => {
+                          if(err){
+                              console.log('ERROR SAVING AT CURRENT USER');
+                              res.send('ERROR SAVING AT CURRENT USER');
+                          }
+                          else{
+                              target.save((err) => {
+                                  if(err){
+                                      console.log('ERROR SAVING AT TARGET USER');
+                                      res.send('ERROR SAVING AT TARGET USER');
+                                  }
+                                  else {res.send('success');}
+                              });
+                          }
+                      });
+                  }
+              });
+          }
+      });
+    } else {
+      console.log("titties1");
+      res.redirect('/app/index.html');
+    }
+  } else {
+    console.log("titties1");
+    res.redirect('/app/index.html');
+  }
 });
 
 app.get('/account/get/accountInfo', (req, res) => {
-  var user = req.cookies.login.username;
-  Users.findOne({'username': user}).populate('posts').exec((err, result) => {
-      if (err){
-        res.send("ERROR");
-      } else {
-        res.send(JSON.stringify(result));
-      }
-  });
+  var c = req.cookies;
+  if (c && c.login) {
+    var user = c.login.username;
+    if (checkSession(user)){
+      Users.findOne({'username': user}).populate('posts').exec((err, result) => {
+          if (err){
+            res.send("ERROR");
+          } else {
+            res.send(JSON.stringify(result));
+          }
+      });
+    } else {
+      res.redirect('/app/index.html');
+    }
+  } else {
+    res.redirect('/app/index.html');
+  }
 });
 
 app.get('/account/get/suggestedFollowing', (req, res) => {
-  var user = req.cookies.login.username;
-  Users.findOne({'username': user}).populate('following').exec((err, result) => {
-      if (err){
-        res.send("ERROR");
-      } else {
-        Users.find({}).exec((err, results) => {
-          var array = [];
-          for (let i = 0; i < results.length; i++){
-            if(results[i].username === user){
-              continue;
-            } else {
-              var following = result.following;
-              console.log(following.length);
-              var bool = true;
-              for (let j = 0; j < following.length; j++){
-                if (results[i].username === following[j].username){
-                  bool = false;
+  var c = req.cookies;
+  if (c && c.login) {
+    var user = c.login.username;
+    if (checkSession(user)){
+      var user = req.cookies.login.username;
+      Users.findOne({'username': user}).populate('following').exec((err, result) => {
+          if (err){
+            res.send("ERROR");
+          } else {
+            Users.find({}).exec((err, results) => {
+              var array = [];
+              for (let i = 0; i < results.length; i++){
+                if(results[i].username === user){
+                  continue;
+                } else {
+                  var following = result.following;
+                  var bool = true;
+                  for (let j = 0; j < following.length; j++){
+                    if (results[i].username === following[j].username){
+                      bool = false;
+                    }
+                  }
+                  if (bool){
+                    array.push(results[i]);
+                  }
                 }
               }
-              if (bool){
-                array.push(results[i]);
-              }
-            }
+              res.send(JSON.stringify(array));
+            });
           }
-          res.send(JSON.stringify(array));
-        });
-      }
-  });
+      });
+    } else {
+      res.redirect('/app/index.html');
+    }
+  } else {
+    res.redirect('/app/index.html');
+  }
 });
 
 app.get('/get/user', (req, res) => {
-  res.end(JSON.stringify(req.cookies.login));
+  var c = req.cookies;
+  if (c && c.login) {
+    var username = c.login.username;
+    if (checkSession(username)){
+      res.end(JSON.stringify(c.login));
+    } else {
+      res.redirect('/index.html');
+    }
+  } else {
+    res.redirect('/index.html');
+  }
 });
 
 app.use(express.static('public_html'));
