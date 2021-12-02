@@ -27,31 +27,3 @@ function login(){
         }
     });
 }
-
-//here you probably need a form data thing for multer ****
-//have an alert to signify any issue but if we want to go a more subtle route its cool
-function createUser(){
-    /*
-    let deno = $('name').val();
-    let user = $('#username').val();
-    let pass = $('#password').val();
-    let bday = $('birthday').val();
-    var jData = JSON.stringify({name:deno, username:user, password:pass, birthday:bday});
-    */
-    newAcc = new FormData($('#accCreate')); //add a <form></form> in html ?
-    $.ajax({
-        url: '/app/create/',
-        data: newAcc,
-        method: 'POST',
-        processData: false,
-        contentType: false,
-        success: (result) => {
-            if(result != 'success'){
-                alert(result);
-            }
-            else{
-                window.location.href = '/app/index.html';
-            }
-        }
-    });
-}
