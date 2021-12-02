@@ -72,6 +72,7 @@ var Users = mongoose.model('users', userSchema);
 
 //Schema for Posts
 var postSchema = new Schema({
+    author: mongoose.Types.ObjectId,
     username: String,
     name: String,
     profilePicture: String,
@@ -171,12 +172,13 @@ app.get('/app/login/:username/:password', (req, res) => {
 	    if (result.length === 0){
 	      res.send("INCORRECT LOGIN ATTEMPT");
             } else {
-	      var toHash = pss + result[0].salt;
+              var toHash = pss + result[0].salt;
               data = hash.update(toHash, 'utf-8');//same asyc probs possiblities
               attmpt = data.digest('hex');
               if(attmpt == result[0].hash){
                 createSession(user);
-                res.cookie("login", {username: user, name: result[0].name, profilePicture: result[0].profilePicture},{maxAge: 300000}); //5 minute cookie life
+                res.cookie("login", {username: user, name: result[0].name, profilePicture: result[0].profilePicture,
+                    id: result[0].id},{maxAge: 300000}); //5 minute cookie life
                 res.send('success');
               }
               else{
@@ -231,11 +233,13 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
   //▼ returns a string mm/dd/yyyy, hh:mm:ss AM/PM ▼
   console.log(req.body);
   var postTime = (new Date(Date.now())).toLocaleString();
+  var ident = req.cookies.login.id;
   var user = req.cookies.login.username;
   var name = req.cookies.login.name;
   var pp = req.cookies.login.profilePicture;
   if (req.file) {
     var entry = new Posts({
+        author: ident,
         username: user,
         name: name,
         profilePicture: pp,
@@ -255,6 +259,7 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
     });
   } else {
     var entry = new Posts({
+        author: ident,
         username: user,
         name: name,
         profilePicture: pp,
@@ -310,15 +315,42 @@ app.post('/account/like/post', (req, res) => {
 //getting all the posts
 app.get('/account/get/posts', (req, res) => {
     console.log("Getting posts");
+    curIdent = req.cookies.login.id;
+    curUser = req.cookies.login.username;
     Posts.find({}).exec((err, results) => {
         if(err){
             console.log('PROBLEM GETTING ALL POSTS');
             res.send('PROBLEM GETTING ALL POSTS');
         }
         else{
-            console.log('GETTING ALL POSTS SUCCESFUL');
-            //▼ formatting json for testing purposes ▼
-            res.send(JSON.stringify(results, null, 2));
+            // /*
+            Users.findOne({'username': curUser}).exec((err, acUser) => {
+                if(err){
+                    console.log('Error filtering through posts');
+                    acUser.end('Error filtering through posts');
+                }
+                else{
+                    for(let i=0; i < results.length; i++){
+                        console.log(JSON.stringify(acUser.username) + ' this the curUser');
+                        console.log(JSON.stringify(results[i].username) + ' this the cur comment\'s user');
+                        console.log(JSON.stringify(acUser.following));
+                        if(results[i].username == acUser.username){
+                            continue;
+                        }
+                        else if(acUser.length != 0 && acUser.following.includes(results[i].author)){
+                            continue;
+                        }
+                        else{
+                            results.splice(i,1);
+                        }
+                    }
+                    //console.log(JSON.stringify(results, null, 2))
+                    console.log('GETTING ALL POSTS SUCCESSFUL');
+                    res.send(JSON.stringify(results, null, 2));
+                }
+            });
+            // */
+            //res.send(JSON.stringify(results, null, 2));
         }
     });
 });
