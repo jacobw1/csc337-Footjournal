@@ -185,3 +185,11 @@ function buildPostHTMLDiv(post, bool, bool2){
   str += "</div>";
   return str;
 }
+
+function buildMessagePost(username, text){
+  let str = "<div class='message_post'>";
+  str += '<h3>' +username+'</h3>';
+  str+=  '<div>' +text+ '</div>';
+  str += '</div>';
+  return str;
+}
