@@ -126,12 +126,15 @@ input[type="submit"]{
 
 .text_post{
   width:80%;
-  font-size: 2vw;
   height: auto;
   text-align: left;
   display: inline-block;
   padding: 20px;
   margin: 10px;
+}
+
+.content_post{
+  font-size: 2vw;
 }
 
 .pfp_post{
@@ -144,6 +147,10 @@ input[type="submit"]{
   display: inline;
   font-size: 20px;
   font-weight: bold;
+}
+
+.text_post h2{
+  border-bottom: solid 1px black;
 }
 
 .button_post{
@@ -164,6 +171,20 @@ input[type="submit"]{
   border: none;
   font-size: 15px;
 }
+
+.text_comment{
+  margin-top: 15px;
+  margin-left: 40px;
+}
+
+.text_comment h3{
+  display: inline;
+}
+
+.content_comment{
+  display: inline;
+}
+
 
 #suggest{
   height: 80vh;
