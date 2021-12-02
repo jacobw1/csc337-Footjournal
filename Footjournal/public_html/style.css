@@ -12,6 +12,14 @@ input[type="file"]{
   font-family: Lucidatypewriter, monospace;
 }
 
+input[type="submit"]{
+  margin-top: 5px;
+  padding: 5px 12px;
+  background-color: inherit;
+  border-radius: 12px;
+  font-family: Lucidatypewriter, monospace;
+}
+
 #container{
   background-color: #e2eafc;
   width:30vw;
@@ -117,7 +125,7 @@ input[type="file"]{
 
 
 .text_post{
-  width:60%;
+  width:80%;
   height: auto;
   text-align: left;
   display: inline-block;
@@ -149,8 +157,11 @@ input[type="file"]{
   background-color: #E1ECF7;
 }
 
-.text_post .content_post{
-  /* style the content in posts (the actual text in the post)*/
+.text_post input{
+  width: 50%;
+  background-color: #e2eafc;
+  border: none;
+  font-size: 15px;
 }
 
 #suggest{
