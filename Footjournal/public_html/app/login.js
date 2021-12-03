@@ -3,10 +3,15 @@ Dylan Burish, Jacob Williams, Francisco Figueroa
 CSC 337
 Final Project -- Footjournal
 login.js
-**Short desc. of client-side login process**
+he file serves as part of the client-side processes in our final_project Footjournal along with its sister file, client.js. It is
+responsible for login attempts to the page.
 */
 
-//i used jquery but we can change if you guys aren't fans of it
+/*
+Parameters: None.
+login() preforms a GET request containg a login attempt for a prospective user. If successful, the user is then redirect to their 
+personal home page, otherwise an error message is then displayed.
+*/
 function login(){
     let user = $('#username').val();
     let pass = $('#password').val();

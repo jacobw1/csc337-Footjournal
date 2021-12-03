@@ -3,9 +3,17 @@ Dylan Burish, Jacob Williams, Francisco Figueroa
 CSC 337
 Final Project -- Footjournal
 client.js
-**Short desc. of client-side processes**
+The file serves as the bulk of the client-side processes in our final_project Footjournal along with its sister file, login.js. The file is
+reponsible for continually fetching posts, comments, and messages as well as user information, and interaction processes between the user, 
+posts, and other users, allowing for a dynamic experience on the page catered to a specfic user's session.
 */
 
+
+/*
+Parameters: None.
+getPosts() sets up a GET request for the a JSON object containing current user's relevant posts for the home page. When updated, the DOM then
+displays Posts after they are formatted via the buildPostHTMLDiv() helper function. 
+*/
 function getPosts(){
     console.log("Getting posts in client?");
     $.ajax({
@@ -32,6 +40,12 @@ function getPosts(){
     });
 }
 
+
+/*
+Parameters: None.
+setSuggestedFollowers() sets up a GET request for the a JSON object containing some relevant other user information. Using the helper
+function to build the incoming JSON array into html via iterating through element the returned users displayed once the DOM is updated.
+*/
 function setSuggestedFollowers(){
   console.log("Setting account info in client?");
   $.ajax({
@@ -54,6 +68,13 @@ function setSuggestedFollowers(){
   });
 }
 
+
+/*
+Parameters: None.
+setAccountInfo() sets up a GET request for the a JSON object containing the current user's information. Relevant user information such as 
+profile image, following/followers length and username are displayed when updated to the DOM and associated Posts are also returned and 
+displayed once the DOM is updated via the buildPostHTMLDiv() helper function.
+*/
 function setAccountInfo(){
   console.log("Setting account info in client?");
   $.ajax({
@@ -90,6 +111,12 @@ function setAccountInfo(){
   });
 }
 
+
+/*
+Parameters: None.
+setUserInfo() sets up a GET request for the a JSON object containing the current user's information. The image file and username is then 
+displayed on the DOM once updated.
+*/
 function setUserInfo(){
     $.ajax({
         url: '/get/user',
@@ -107,6 +134,12 @@ function setUserInfo(){
     });
 }
 
+
+/*
+Parameters: idOfPost, a post's id in String representation
+likePost() initially creates a JSON object string containing the parameter of the relevant Post and It then preforms an ajax POST 
+request to the serverside to update the the status of the Post like count. Redirects user when successful.
+*/
 function likePost(idOfPost){
   var jData = JSON.stringify({id:idOfPost});
   console.log("Liking attempt!");
@@ -127,6 +160,13 @@ function likePost(idOfPost){
   });
 }
 
+
+/*
+Parameters: idOfPost, a post's id in String representation
+commentOnPost() initially sets an id for the comment to be created and then creates a JSON object string containing the parameter and
+the content in the comment. It then preforms an ajax POST request to the serverside to update the the status of the Post in relation to a 
+newly create comment. Redirects user when successful.
+*/
 function commentOnPost(idOfPost){
   let htmlID = "comment" + idOfPost;
   var commentContent = $("#" + htmlID).val();
@@ -149,6 +189,12 @@ function commentOnPost(idOfPost){
   });
 }
 
+
+/*
+Parameters: idOfUser, the user's id in String representation
+followUser() initially creates a JSON object string containing the parameter. It then preforms an ajax POST request to the serverside
+to update the relationship between two users. Redirects user when successful.
+*/
 function followUser(idOfUser){
   var jData = JSON.stringify({id: idOfUser});
   console.log("Friending attempt!");
@@ -170,6 +216,11 @@ function followUser(idOfUser){
 }
 
 
+/*
+Parameters: None.
+getGenPosts() preforms a GET request every second to the serverside to update the posts currently on screen for the message page. The helper function
+buildMessagePost is then called for each message in the server-side reposonse and the DOM on the 'general' channel  is updated.
+*/
 function getGenPosts(){
   $.get('/account/get/generalposts', (result) => {
     var genMsgs = JSON.parse(result);
@@ -184,6 +235,11 @@ function getGenPosts(){
 setInterval(getGenPosts, 1000);
 
 
+/*
+Parameters: None.
+getOtherPosts() preforms a GET request every second to the serverside to update the posts currently on screen for the message page. The helper function
+buildMessagePost is then called for each message in the server-side reposonse and the DOM on the 'other' channel is updated.
+*/
 function getOtherPosts(){
   $.get('/account/get/otherposts', (result) => {
     var otherMsgs = JSON.parse(result);
@@ -198,6 +254,11 @@ function getOtherPosts(){
 setInterval(getOtherPosts, 1000);
 
 
+/*
+Parameters: None.
+makeGenPost() grabs the currently inputted value from the general text box on the 'general' channel and prefroms a POST request to the server
+side, sending through the text body in a JSON object. If successful, text entry field is cleared.
+*/
 function makeGenPost(){
   var jData = JSON.stringify({body: $('#genText').val()});
   $.ajax({
@@ -219,6 +280,11 @@ function makeGenPost(){
 }
 
 
+/*
+Parameters: None.
+makeOtherPost() grabs the currently inputted value from the other text box on the 'other' channel and prefroms a POST request to the server
+side, sending through the text body in a JSON object. If successful, text entry field is cleared.
+*/
 function makeOtherPost(){
   var jData = JSON.stringify({body: $('#otherText').val()});
   $.ajax({
@@ -240,6 +306,12 @@ function makeOtherPost(){
 }
 
 
+/*
+Parameters: user, JSON object representing an actual user
+buildPostHTMLDiv() is a helper function used to construct the proper HTML needed for our posts functionality. Depending on the logic checks
+preformed against bool and bool2, functionalites for posts are applied and the <div> is constructed containing relevant information pertaining
+to the user.
+*/
 function buildFriendHTMLDiv(user){
   console.log(user);
   let str = "<div class='post_suggest'>";
@@ -251,6 +323,14 @@ function buildFriendHTMLDiv(user){
 }
 
 
+/*
+Parameters: post, JSON object representing a user's post
+            bool, boolean parameter checking for the existance of an img file
+            bool2, checking if the message is being build for home or account page
+buildPostHTMLDiv() is a helper function used to construct the proper HTML needed for our posts functionality. Depending on the logic checks
+preformed against bool and bool2, functionalites for posts are applied and the <div> is constructed using relevant data concerning the post
+passed in.
+*/
 function buildPostHTMLDiv(post, bool, bool2){
   let str = "<div class='text_post'>";
   str += "<img src='../" + post.profilePicture + "' width='30' height='30'>";
@@ -277,6 +357,12 @@ function buildPostHTMLDiv(post, bool, bool2){
   return str;
 }
 
+
+/*
+Parameters: username, a String representation of a user
+            text, a String of text representing a message body
+buildMessagePost() is a helper function used to construct the proper HTML needed for our messaging functionality.
+*/
 function buildMessagePost(username, text){
   let str = "<div class='message_post'>";
   str += '<h3>' +username+'</h3>';

@@ -1,3 +1,14 @@
+/*
+Dylan Burish, Jacob Williams, Francisco Figueroa
+CSC 337
+Final Project -- Footjournal
+style.css
+The file handles all aesthetic executions, ranging from color palettes to placements, fonts, font-sizing, sizing, and button formats
+across all HTML files in both the app and account directories. The file is also divided into sections pertaining to each individual
+HTML file.
+*/
+
+
 /* style for index.html */
 body{
   font-family: Lucidatypewriter, monospace;
