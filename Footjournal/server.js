@@ -10,7 +10,7 @@ following different users, posting and like posts in real time, along with a hel
 acts as a public forum with two channels. All the different functionalities are backed by static files and dynamic
 processes. The login system incorporates a salting and hashing of user information for added security as well as
 sessions that are initialised and deleted upon a preset time of five minutes of inactivity. Interaction with other
-users is also possible with real-time commenting and the account creation, and posting allows for the upload of 
+users is also possible with real-time commenting and the account creation, and posting allows for the upload of
 image files.
 -- Current Index of Sections (subject to change) --
 Line #26:   Imported modules & Globals Section
@@ -40,7 +40,7 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 //app.use(express.json()); //parses incoming JSON on arrival
-//app.use('/account/*', auth);
+app.use('/account/*', auth);
 app.get('/', (req, res) => { res.redirect('/app/index.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
@@ -160,7 +160,7 @@ function doesUserHaveSession(username){
 
 /*
 Parameters: username, a String representation of a username associated with an active account
-checkSession() launches a logic gate testing if the 'username' parameter is associated with a value currently in the 
+checkSession() launches a logic gate testing if the 'username' parameter is associated with a value currently in the
 'sessions' map data structure, returning true if it is, false conversely.
 */
 function checkSession(username){
@@ -199,7 +199,7 @@ function auth(req, res, next){
 /*********  User Creation & Log-in Section    *********/
 
 /*
-A use of the get() method of our Express app that takes in a username and password string as url parameters for login. It then 
+A use of the get() method of our Express app that takes in a username and password string as url parameters for login. It then
 queries our database to confirm that the username matches an existing one, and that the password provided combines with our salting
 to match our hash value. If so, calls for a user session to be initiated via createSession() and responses to the client-side
 that the login attempt was successful. If it does not match, it will return an error message to the client-side.
@@ -236,7 +236,7 @@ app.get('/app/login/:username/:password', (req, res) => {
 
 /*
 A use of the post() method of our Express app that additionally uses the Multer module to take in FormData objects for account creation.
-The method first checks if the file attribute of the req field exists, if so it will grab the inputted password and form a hash using a 
+The method first checks if the file attribute of the req field exists, if so it will grab the inputted password and form a hash using a
 salt conprised of a random large number. A query is then preform to ensure that the username is unique, and if so a new User object is
 created from the request body fields and the image(req.file.filename). The User is then saved and if successful the user is redirect to the
 login screen.
@@ -286,12 +286,12 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
 
 /*
 A use of the post method of our Express app, has the Multer module backing to take in image files, in FormData format for post creation.
-Firstly the method call tries to verify the existence of the cookie attribute of the request. If valid, creates a Date string of the 
+Firstly the method call tries to verify the existence of the cookie attribute of the request. If valid, creates a Date string of the
 current time and subsequently uses information stored inside the cookie attribute to form a new Posts object along with the Date string.
-The same process is done with the absence of the image file in the Post object creation following. Upon success the user is redirected 
+The same process is done with the absence of the image file in the Post object creation following. Upon success the user is redirected
 back to the home page.
 */
-app.post('/create/post', upload.single('photo'), (req, res) => {
+app.post('/account/create/post', upload.single('photo'), (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
     var username = c.login.username;
@@ -383,7 +383,7 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
 
 /*
 A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session. The
-method queries the database for the associated post being liked. When successful the integer representing the like value of a post is 
+method queries the database for the associated post being liked. When successful the integer representing the like value of a post is
 incremented and updated, returning a success msg upon success.
 */
 app.post('/account/like/post', (req, res) => {
@@ -439,7 +439,7 @@ app.get('/account/get/posts', (req, res) => {
     if (checkSession(username)){
       curIdent = req.cookies.login.id;
       curUser = req.cookies.login.username;
-      Posts.find({}).exec((err, results) => {
+      Posts.find({}).populate('comments').exec((err, results) => {
           if(err){
               console.log('PROBLEM GETTING ALL POSTS');
               res.send('PROBLEM GETTING ALL POSTS');
@@ -545,7 +545,7 @@ A query is preformed to first locate the current user, then another query is pre
 the target is found, his information is added to the current User's array of followers and conversely the current User is added to
 the target's followers. Upon success the information for both users is updated and a success msg is return to the client-side.
 */
-app.post('/app/follow/user', (req, res) => {
+app.post('/account/follow/user', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
     var user = c.login.username;
@@ -604,7 +604,7 @@ app.get('/account/get/accountInfo', (req, res) => {
   if (c && c.login) {
     var user = c.login.username;
     if (checkSession(user)){
-      Users.findOne({'username': user}).populate('posts').exec((err, result) => {
+      Users.findOne({'username': user}).populate({path: 'posts', populate: {path: 'comments' }}).exec((err, result) => {
           if (err){
             res.send("ERROR");
           } else {
@@ -622,7 +622,7 @@ app.get('/account/get/accountInfo', (req, res) => {
 
 /*
 A use of the get() method of our Express app that initially verifies the existence of cookies in the request field and user session.
-The method call preforms a double query in which the outer one looks for all the users that the current user actively follows and the 
+The method call preforms a double query in which the outer one looks for all the users that the current user actively follows and the
 inner query finds all the users in the database. The resulting JSON array that is return are all the users that are not actively followed
 by the current user.
 */
@@ -704,7 +704,7 @@ app.get('/account/get/generalposts', (req, res) => {
         }
     });
 });
-    
+
 
 /*
 This use of the get method of the Express app creates a query in which all Messages objects associated with the 'other' chat are
@@ -758,7 +758,7 @@ app.post('/account/post/general', (req, res) => {
         res.redirect('/app/index.html');
     }
 });
-    
+
 
 /*
 A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session.
@@ -795,7 +795,7 @@ app.post('/account/post/other', (req, res) => {
         res.redirect('/app/index.html');
     }
 });
-    
+
 // Calls for the Express method to use our static files and directory containing images
 app.use(express.static('public_html'));
 app.use(express.static('uploads/images'));
