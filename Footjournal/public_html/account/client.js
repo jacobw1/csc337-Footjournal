@@ -6,7 +6,6 @@ client.js
 **Short desc. of client-side processes**
 */
 
-
 function getPosts(){
     console.log("Getting posts in client?");
     $.ajax({
@@ -66,6 +65,7 @@ function setAccountInfo(){
             window.location.href = '/app/index.html';
           } else {
             let user = JSON.parse(result);
+            console.log(user);
             $('#account_pfp').attr("src", "../" + user.profilePicture);
             $('#account_username').text(user.name);
             $('#account_followers').text("Followers: " + user.followers.length);
@@ -153,7 +153,7 @@ function followUser(idOfUser){
   var jData = JSON.stringify({id: idOfUser});
   console.log("Friending attempt!");
   $.ajax({
-      url: '/app/follow/user',
+      url: '/account/follow/user',
       data: jData,
       method: 'POST',
       contentType: 'application/json',
@@ -171,9 +171,7 @@ function followUser(idOfUser){
 
 
 function getGenPosts(){
-  console.log("Gen msg fetch attempt!");
   $.get('/account/get/generalposts', (result) => {
-    console.log(result);
     var genMsgs = JSON.parse(result);
     var msgDiv = '';
     for(msg in genMsgs){
@@ -187,9 +185,7 @@ setInterval(getGenPosts, 1000);
 
 
 function getOtherPosts(){
-  console.log("Other msg fetch attempt!");
   $.get('/account/get/otherposts', (result) => {
-    console.log(result);
     var otherMsgs = JSON.parse(result);
     var msgDiv = '';
     for(msg in otherMsgs){
@@ -269,6 +265,13 @@ function buildPostHTMLDiv(post, bool, bool2){
     str += "<button type='button' class='button_post' onclick='likePost(\"" + post._id.toString() + "\")'" + ">Like</button>";
     str += "<button type='button' class='button_post' onclick='commentOnPost(\"" + post._id.toString() + "\")'" + ">Comment</button>"
     str += "<input type='text' id='comment" + post._id.toString() + "' name='comment' value=''>"
+  }
+  for (i in post.comments){
+    str += "<div class='text_comment'>";
+    str += "<h3>" + post.comments[i].name + "</h3>";
+    str += "<div class='content_comment'>";
+    str += "   " + post.comments[i].body + "</div>";
+    str += "</div>";
   }
   str += "</div>";
   return str;
