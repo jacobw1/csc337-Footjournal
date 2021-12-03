@@ -169,6 +169,81 @@ function followUser(idOfUser){
   });
 }
 
+
+function getGenPosts(){
+  console.log("Gen msg fetch attempt!");
+  $.get('/account/get/generalposts', (result) => {
+    console.log(result);
+    var genMsgs = JSON.parse(result);
+    var msgDiv = '';
+    for(msg in genMsgs){
+      let cur = genMsgs[msg];
+      msgDiv += buildMessagePost(cur.username, cur.body);
+    }
+    $('#general_content').html(msgDiv);
+  });
+}
+setInterval(getGenPosts, 1000);
+
+
+function getOtherPosts(){
+  console.log("Other msg fetch attempt!");
+  $.get('/account/get/otherposts', (result) => {
+    console.log(result);
+    var otherMsgs = JSON.parse(result);
+    var msgDiv = '';
+    for(msg in otherMsgs){
+      let cur = otherMsgs[msg];
+      msgDiv += buildMessagePost(cur.username, cur.body);
+    }
+    $('#other_content').html(msgDiv);
+  });
+}
+setInterval(getOtherPosts, 1000);
+
+
+function makeGenPost(){
+  var jData = JSON.stringify({body: $('#genText').val()});
+  $.ajax({
+      url: '/account/post/general',
+      data: jData,
+      method: 'POST',
+      contentType: 'application/json',
+      success: (result) => {
+        if(result == 'success'){
+          console.log('Posting to general successful');
+          $('#genText').val('');
+        }
+        else{
+          console.log(result);
+          alert(result);
+        }
+      }
+  });
+}
+
+
+function makeOtherPost(){
+  var jData = JSON.stringify({body: $('#otherText').val()});
+  $.ajax({
+      url: '/account/post/other',
+      data: jData,
+      method: 'POST',
+      contentType: 'application/json',
+      success: (result) => {
+        if(result == 'success'){
+          console.log('Posting to other successful');
+          $('#otherText').val('');
+        }
+        else{
+          console.log(result);
+          alert(result);
+        }
+      }
+  });
+}
+
+
 function buildFriendHTMLDiv(user){
   console.log(user);
   let str = "<div class='post_suggest'>";

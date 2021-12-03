@@ -4,8 +4,10 @@
     <meta charset="UTF-8"/>
     <title>Footjournal Post</title>
     <link rel="stylesheet" href="../style.css">
+    <script src="../jquery.js"></script>
+    <script src="client.js"> </script>
   </head>
-  <body>
+  <body onload="getGenPosts(), getOtherPosts()">
     <div id="Footjournal_home">
       <h1 onclick="window.location.href='home.html'">Footjournal</h1>
       <button type="button" id="post" onclick="window.location.href='post.html'">Post</button>
@@ -20,19 +22,19 @@
       </div>
       <div class="message_creation" id="general_creation">
         <input type="text" id="genText" name="new_general_message" value="">
-        <button type="button" name="send_general_message">Post to general</button>
+        <button type="button" name="send_general_message" onclick="makeGenPost()">Post to general</button>
       </div>
     </div>
     <div id="message_other">
       <h1>Other</h1>
-      <div id= other_content>
+      <div id="other_content">
 
       </div>
       <div class="message_creation" id="other_creation">
         <input type="text" id="otherText" name="new_other_message" value="">
-        <button type="button" name="send_other_message">post to other</button>
+        <button type="button" name="send_other_message" onclick="makeOtherPost()">Post to other</button>
       </div>
     </div>
-
+    
   </body>
 </html>

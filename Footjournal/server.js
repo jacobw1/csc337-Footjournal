@@ -3,15 +3,28 @@ Dylan Burish, Jacob Williams, Francisco Figueroa
 CSC 337
 Final Project -- Footjournal
 server.js
-**Short desc. of server-side processes**
-Testing the reupload feature
-LOL
+The file serves as the server-side client for our final project: Footjournal, which may or may not have a
+passing resemblance to some other social media platform. Using Express to set up our server-side listening
+and being backed by a Mongo database, the project has the functionalities of creating your own personal account,
+following different users, posting and like posts in real time, along with a help page, and a message page that
+acts as a public forum with two channels. All the different functionalities are backed by static files and dynamic
+processes. The login system incorporates a salting and hashing of user information for added security as well as
+sessions that are initialised and deleted upon a preset time of five minutes of inactivity. Interaction with other
+users is also possible with real-time commenting and the account creation, and posting allows for the upload of 
+image files.
+-- Current Index of Sections (subject to change) --
+Line #26:   Imported modules & Globals Section
+Line #50:   MongoDB Section
+Line #121:  Authentification & User Session Section
+Line #199:  User Creation & Log-in Section
+Line #285:  Posts and Comments
+Line #540:  User Acc page, User following, & User Suggestions
+Line #689:  Messaging
 */
 
 
-/*
-Imported modules
-*/
+/*********  Imported modules & Globals Section    *********/
+
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -31,7 +44,10 @@ app.use(cookieParser());
 app.get('/', (req, res) => { res.redirect('/app/index.html')})
 var hash = crypto.createHash('sha512'); //hashing algo.
 var sessions = new Map();
-const MAX_LOGIN_TIME = 7000; //5 minutes
+const MAX_LOGIN_TIME = 300000; //5 minutes
+
+
+/*********  MongoDB Section  *********/
 
 /*
 The connect() method of the mongoose module object. We preform the actual connection and we
@@ -52,9 +68,9 @@ conn.on('error', console.error.bind(console, 'connection error: '));
 
 
 /*
-The creation of a Schema object that will act as our skeleton structure to preform entries into our
+The creation of Schema objects that will act as our skeleton structures to preform entries into our
 Mongo database. When the object structure is layed out, a mongoose.model() object is created
-that holds our created Schema and have entering data be modeled against it.
+that holds our created Schema and then has entering data be modeled against it.
 */
 //Schema for users
 var userSchema = new Schema({
@@ -95,20 +111,21 @@ var Comments = mongoose.model('Comments', comSchema);
 
 //Schema for Message
 var msgSchema = new Schema({
-    toUser: String,
-    fromUser: String,
-    body: String,
-    date: String
+    username: String,
+    type: String,
+    body: String
 });
 var Messages = mongoose.model('Msgs', msgSchema);
 
 
+/*********  Authentification & User Session Section   *********/
+
 /*
-Authentication, session creation, and session filtering section used to keep track of current users 'online'
-thus either keeping their sesison active or logging them off if inactive.
-We can salt and hash these if you guys want too ****************
+Parameters: None
+filterSessions() creates an instance of a Date object set to the time of its creation and then iterates through
+a Map data structure containing users paired to their time of session start. A logic gate check is then preformed
+to see if the time the user has spent inactive is greater than the MAX_LOGIN_TIME of 5 minutes.
 */
-//Loops through my map() and checks against the MAX_LOGIN_TIME to see if a user should be logged off.
 function filterSessions(){
     var now = Date.now();
     for(let key of sessions.keys()){
@@ -121,21 +138,31 @@ function filterSessions(){
 }
 setInterval(filterSessions, 2000);
 
-//Creates a session for a user that has logged in or interacted with the site.
+
+/*
+Parameters: username, a String representation of a username associated with an active account
+createSession() creates an instance of a Date object set to the time of its creation called 'now', then it sets the 'username'
+parameter and now as key, value pairs respectively in the global Map data structure 'sessions'.
+*/
 function createSession(username){
     var now = Date.now();
     sessions.set(username, now);
     console.log('session created for ' + username);
 }
 
-
+//im assuming that this is deprecated, will wait for dylan to confirm -- will not comment
 function doesUserHaveSession(username){
   console.log("Checking session");
 
   return (username in sessions)
 }
 
-//Checks to see if a user exists within the map() that holds current in-session users
+
+/*
+Parameters: username, a String representation of a username associated with an active account
+checkSession() launches a logic gate testing if the 'username' parameter is associated with a value currently in the 
+'sessions' map data structure, returning true if it is, false conversely.
+*/
 function checkSession(username){
     if(sessions.get(username) != undefined){
         return true;
@@ -143,7 +170,14 @@ function checkSession(username){
     return false
 }
 
-//Checks to see if user-session is valid and if-so updates their current session, redirects if invalid
+
+/*
+Parameters: req, the request field -- also storer of cookies
+            res, the response field
+            next, control flow, kicks off next function to execute
+auth() firstly confirms cookies are valid then it proceeds to check to see if user-session is valid and if-so updates
+their current session, redirects if invalid via 'res'.
+*/
 function auth(req, res, next){
     var cook = req.cookies;
     if(cook && cook.login){
@@ -162,11 +196,14 @@ function auth(req, res, next){
 }
 
 
+/*********  User Creation & Log-in Section    *********/
+
 /*
-User creation and login section, send either a POST or GET request respectively to either confirm an
-existing user and allow them to sign-in or create a brand new user
+A use of the get() method of our Express app that takes in a username and password string as url parameters for login. It then 
+queries our database to confirm that the username matches an existing one, and that the password provided combines with our salting
+to match our hash value. If so, calls for a user session to be initiated via createSession() and responses to the client-side
+that the login attempt was successful. If it does not match, it will return an error message to the client-side.
 */
-//we can change this to better accommodate a more reliable user login i just copied what Ben did tbh*******
 app.get('/app/login/:username/:password', (req, res) => {
     var user = req.params.username;
     var pss = req.params.password;
@@ -196,6 +233,14 @@ app.get('/app/login/:username/:password', (req, res) => {
     });
 });
 
+
+/*
+A use of the post() method of our Express app that additionally uses the Multer module to take in FormData objects for account creation.
+The method first checks if the file attribute of the req field exists, if so it will grab the inputted password and form a hash using a 
+salt conprised of a random large number. A query is then preform to ensure that the username is unique, and if so a new User object is
+created from the request body fields and the image(req.file.filename). The User is then saved and if successful the user is redirect to the
+login screen.
+*/
 app.post('/create/account', upload.single('photo'), (req, res) => {
   if (req.file) {
     pass = req.body.password;
@@ -236,6 +281,16 @@ app.post('/create/account', upload.single('photo'), (req, res) => {
   else throw 'error';
 });
 
+
+/*********  Posts and Comments  *********/
+
+/*
+A use of the post method of our Express app, has the Multer module backing to take in image files, in FormData format for post creation.
+Firstly the method call tries to verify the existence of the cookie attribute of the request. If valid, creates a Date string of the 
+current time and subsequently uses information stored inside the cookie attribute to form a new Posts object along with the Date string.
+The same process is done with the absence of the image file in the Post object creation following. Upon success the user is redirected 
+back to the home page.
+*/
 app.post('/create/post', upload.single('photo'), (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -325,48 +380,58 @@ app.post('/create/post', upload.single('photo'), (req, res) => {
     res.redirect('/app/index.html');
   }});
 
-    //will assume like-button has info used in like method ie onClickfunc(objectID) that gets send with the req
-    app.post('/account/like/post', (req, res) => {
-      var c = req.cookies;
-      if (c && c.login) {
-        var user = c.login.username;
-        if (checkSession(user)){
-          Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
+
+/*
+A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session. The
+method queries the database for the associated post being liked. When successful the integer representing the like value of a post is 
+incremented and updated, returning a success msg upon success.
+*/
+app.post('/account/like/post', (req, res) => {
+    var c = req.cookies;
+    if (c && c.login) {
+    var user = c.login.username;
+    if (checkSession(user)){
+        Posts.findOneAndUpdate({'_id':req.body.id}, {$inc:{'likeCount':1}}, {new:true}).exec((err) => {
+        if(err){
+            console.log('ERROR INCREASING LIKE COUNT');
+            res.send('ERROR INCREASING LIKE COUNT');
+        }
+        else{
+            Users.findOne({'username': user}).exec((err, result) => {
             if(err){
-              console.log('ERROR INCREASING LIKE COUNT');
-              res.send('ERROR INCREASING LIKE COUNT');
+                console.log('ERROR IDENTIFYING USER LIKING THIS');
+                res.send('ERROR IDENTIFYING USER LIKING THIS');
             }
             else{
-              Users.findOne({'username': user}).exec((err, result) => {
+                result.likes.push(req.body.id);
+                result.save((err) => {
                 if(err){
-                  console.log('ERROR IDENTIFYING USER LIKING THIS');
-                  res.send('ERROR IDENTIFYING USER LIKING THIS');
+                    console.log('ERROR SAVING LIKE TO USER');
+                    res.send('ERROR SAVING LIKE TO USER');
                 }
                 else{
-                  result.likes.push(req.body.id);
-                  result.save((err) => {
-                    if(err){
-                      console.log('ERROR SAVING LIKE TO USER');
-                      res.send('ERROR SAVING LIKE TO USER');
-                    }
-                    else{
-                      console.log('LIKE SUCCESSFUL');
-                      res.send('success');
-                    }
-                  });
+                    console.log('LIKE SUCCESSFUL');
+                    res.send('success');
                 }
-              });
+                });
             }
-          });
-        } else {
-          res.redirect('/account/home.html');
+            });
         }
-      } else {
+        });
+    } else {
         res.redirect('/account/home.html');
-      }
-  });
+    }
+    } else {
+    res.redirect('/account/home.html');
+    }
+});
 
-//getting all the posts
+
+/*
+A use of the get() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+The method call queries for all posts in the database and then filters then according to the current user for only relevant posts.
+This would include the user's own posts and posts of those that the user follows.
+*/
 app.get('/account/get/posts', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -399,7 +464,8 @@ app.get('/account/get/posts', (req, res) => {
                           }
                       }
                       console.log('GETTING ALL POSTS SUCCESSFUL');
-                      res.send(JSON.stringify(results, null, 2));
+                      res.send(JSON.stringify(results, null, 2)); // <----------- @dylan can u see if results.reverse() to see if we can fake having the most recent posts be the first to be seen like on twitter or something should work because its an array
+                      //res.send(JSON.stringify(results.reverse(), null, 2)); <----------- what im talkin bout, since its in FIFO its reverse should be a Queue
                   }
               });
           }
@@ -412,6 +478,13 @@ app.get('/account/get/posts', (req, res) => {
   }
 });
 
+
+/*
+A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+A query is then preformed to find the post that the following comment will be attached to, and when found the function, using
+information stored in the cookie along with data from the request body and a new Date object string of the creation time, constructs
+a new Comments object that is subsequently saved.
+*/
 app.post('/account/comment/post', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -463,10 +536,15 @@ app.post('/account/comment/post', (req, res) => {
   }
 });
 
+
+/*********  User Acc page, User following, & User Suggestions   *********/
+
 /*
-Follow a user, fetching followers + following, and Likes for user
+A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+A query is preformed to first locate the current user, then another query is preformed to find the target of the follow action. Once
+the target is found, his information is added to the current User's array of followers and conversely the current User is added to
+the target's followers. Upon success the information for both users is updated and a success msg is return to the client-side.
 */
-//will assume follow button has somethin like onClickfunc(objectID) that gets send with the req
 app.post('/app/follow/user', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -515,6 +593,12 @@ app.post('/app/follow/user', (req, res) => {
   }
 });
 
+
+/*
+A use of the get() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+A query is then preformed to find the current user and a populate method call along with an execute call are preformed to interpret the
+object ids of the populate parameter as the objects themselves. These are then returned in JSON format to the client-side.
+*/
 app.get('/account/get/accountInfo', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -535,6 +619,13 @@ app.get('/account/get/accountInfo', (req, res) => {
   }
 });
 
+
+/*
+A use of the get() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+The method call preforms a double query in which the outer one looks for all the users that the current user actively follows and the 
+inner query finds all the users in the database. The resulting JSON array that is return are all the users that are not actively followed
+by the current user.
+*/
 app.get('/account/get/suggestedFollowing', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -575,6 +666,11 @@ app.get('/account/get/suggestedFollowing', (req, res) => {
   }
 });
 
+
+/*
+A use of the get() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+Utility method used to grab information back from the cookie and into the client-side when needed.
+*/
 app.get('/get/user', (req, res) => {
   var c = req.cookies;
   if (c && c.login) {
@@ -589,7 +685,120 @@ app.get('/get/user', (req, res) => {
   }
 });
 
+
+/*********  Messaging   *********/
+
+/*
+This use of the get method of the Express app creates a query in which all Messages objects associated with the 'general' chat are
+returned in JSON string format.
+*/
+app.get('/account/get/generalposts', (req, res) => {
+    Messages.find({'type': 'general'}).exec((err, result) => {
+        if(err){
+            console.log('Error pulling messages');
+            res.end('Error pulling messages');
+        }
+        else{
+            console.log('Getting posts successful');
+            res.send(JSON.stringify(result, null, 2));
+        }
+    });
+});
+    
+
+/*
+This use of the get method of the Express app creates a query in which all Messages objects associated with the 'other' chat are
+returned in JSON string format.
+*/
+app.get('/account/get/otherposts', (req, res) => {
+    Messages.find({'type': 'other'}).exec((err, result) => {
+        if(err){
+            console.log('Error pulling messages');
+            res.end('Error pulling messages');
+        }
+        else{
+            console.log('Getting posts successful');
+            res.send(JSON.stringify(result, null, 2));
+        }
+    });
+});
+
+/*
+A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+Afterwards, using information both in the request body and in the request cookie, a new Messages object is create and saved into the
+database. In this particular method the object is set to be of part of the 'general' chat subdivision.
+*/
+app.post('/account/post/general', (req, res) => {
+    var c = req.cookies;
+    if (c && c.login) {
+        var user = c.login.username;
+        if (checkSession(user)){
+            var text = req.body.body;
+            var entry = new Messages({
+                username: user,
+                type: 'general',
+                body: text
+            });
+            entry.save((err) =>{
+                if(err){
+                    console.log('Error posting msg to general');
+                    res.end('Error posting msg to general');
+                }
+                else{
+                    console.log('Posting to general successful');
+                    res.end('success');
+                }
+            });
+        }
+        else {
+            res.redirect('/app/index.html');
+        }
+    }
+    else {
+        res.redirect('/app/index.html');
+    }
+});
+    
+
+/*
+A use of the post() method of our Express app that initially verifies the existence of cookies in the request field and user session.
+Afterwards, using information both in the request body and in the request cookie, a new Messages object is create and saved into the
+database. In this particular method the object is set to be of part of the 'other' chat subdivision.
+*/
+app.post('/account/post/other', (req, res) => {
+    var c = req.cookies;
+    if (c && c.login) {
+        var user = c.login.username;
+        if (checkSession(user)){
+            var text = req.body.body;
+            var entry = new Messages({
+                username: user,
+                type: 'other',
+                body: text
+            });
+            entry.save((err) =>{
+                if(err){
+                    console.log('Error posting msg to other');
+                    res.end('Error posting msg to other');
+                }
+                else{
+                    console.log('Posting to other successful');
+                    res.end('success');
+                }
+            });
+        }
+        else {
+            res.redirect('/app/index.html');
+        }
+    }
+    else {
+        res.redirect('/app/index.html');
+    }
+});
+    
+// Calls for the Express method to use our static files and directory containing images
 app.use(express.static('public_html'));
 app.use(express.static('uploads/images'));
 
+//server start-up call
 app.listen(port, () => console.log("App is listening"));
